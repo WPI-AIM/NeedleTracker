@@ -13,6 +13,7 @@ import struct
 import argparse
 import xml.etree.ElementTree as ET
 import yaml
+from collections import deque
 
 # Parse commang line arguments. These are primarily flags for things likely to change between runs.
 parser = argparse.ArgumentParser(description='Register cameras and phantom to global coordinate frame.')
@@ -101,7 +102,11 @@ def main():
     print(mat_left)
     print(dist_left)
 
-    transform_homogeneous = np.zeros((4,4))
+    transform_homogeneous = np.eye(4)
+    transform_homogeneous_last = np.eye(4)
+
+    transform_deltas = deque(maxlen=25)
+    transform_deltas.append(np.eye(4))
 
     # dpi = 200.0
     square_width = 0.007
@@ -149,11 +154,16 @@ def main():
             # print(rvec, tvec)
             # print(rvec, '\n')
             if ret:
-                print(rvec)
+                # print(rvec)
                 rmat, _ = cv2.Rodrigues(np.array(rvec, dtype=np.float32))
                 transform_homogeneous = np.concatenate(
                     (np.concatenate((rmat, tvec), axis=1), np.array([[0, 0, 0, 1]])), axis=0)
                 print(transform_homogeneous)
+                transform_delta = transform_homogeneous_last*transform_homogeneous
+                # print(transform_delta)
+                transform_deltas.append(transform_delta)
+                transform_homogeneous_last = transform_homogeneous
+
             # imgpts, jac = cv2.projectPoints(axis, rvec, tvec, mat_left, dist_left)
             # frame_side_markers = draw(frame_side, charucoCorners, imgpts)
             # cv2.imshow('frame_side_markers', frame_side_markers)

@@ -47,7 +47,7 @@ def main():
         command = 'v4l2-ctl -d /dev/video2 -c focus_auto=0'
         process2 = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         cv2.waitKey(100)
-        command = 'v4l2-ctl -d /dev/video2 -c focus_absolute=40'
+        command = 'v4l2-ctl -d /dev/video2 -c focus_absolute=60'
         process3 = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         cv2.waitKey(100)
 
@@ -103,6 +103,15 @@ def main():
 
     transform_homogeneous = np.zeros((4,4))
 
+    # dpi = 200.0
+    square_width = 0.007
+    marker_width = square_width * 0.5
+    squares_wide = 7
+    squares_high = 9
+    # in_per_m = 1 / 2.54 * 100
+    dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
+    board = cv2.aruco.CharucoBoard_create(squares_wide, squares_high, square_width, marker_width, dictionary)
+
     while cap_top.isOpened():
         ret, frame_top = cap_top.read()
         ret, frame_side = cap_side.read()
@@ -124,40 +133,66 @@ def main():
 
 
         gray = cv2.cvtColor(frame_side, cv2.COLOR_BGR2GRAY)
-        ret, corners = cv2.findChessboardCorners(gray, (9, 7), None)
 
-        if ret == True:
-            print("Found corners")
-            corners2 = cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
 
-            # Find the rotation and translation vectors.
-            print("objp", objp)
-            print("corners2",corners2)
-            ret, rvecs, tvecs, inliers = cv2.solvePnPRansac(objp, corners2, mat_left, dist_left)
+        markerCorners, markerIds, _ = cv2.aruco.detectMarkers(image=frame_side, dictionary=dictionary)
+        # print(markerIds)
+        if markerIds is not None:
+            count, charucoCorners, charucoIds = cv2.aruco.interpolateCornersCharuco(markerCorners=markerCorners, markerIds=markerIds, image=frame_side, board=board, cameraMatrix=mat_left, distCoeffs=dist_left)
+            # print(charucoCorners)
+            # print(charucoIds)
+            # print("stuff!", ret)
+            cv2.aruco.drawDetectedCornersCharuco(image=frame_side, charucoCorners=charucoCorners, charucoIds=charucoIds)
 
-            rmat, _ = cv2.Rodrigues(rvecs)
-
-            transform_homogeneous = np.concatenate((np.concatenate((rmat, tvecs*square_size), axis=1), np.array([[0,0,0,1]])), axis=0)
-            print(transform_homogeneous)
-
+            ret, rvec, tvec = cv2.aruco.estimatePoseCharucoBoard(charucoCorners=charucoCorners, charucoIds=charucoIds, board=board, cameraMatrix=mat_left, distCoeffs=dist_left)
             # project 3D points to image plane
-            imgpts, jac = cv2.projectPoints(axis, rvecs, tvecs, mat_left, dist_left)
-            frame_side_markers = draw(frame_side, corners2, imgpts)
-            cv2.imshow('frame_side_markers', frame_side_markers)
+            # print(rvec, tvec)
+            # print(rvec, '\n')
+            if ret:
+                print(rvec)
+                rmat, _ = cv2.Rodrigues(np.array(rvec, dtype=np.float32))
+                transform_homogeneous = np.concatenate(
+                    (np.concatenate((rmat, tvec), axis=1), np.array([[0, 0, 0, 1]])), axis=0)
+                print(transform_homogeneous)
+            # imgpts, jac = cv2.projectPoints(axis, rvec, tvec, mat_left, dist_left)
+            # frame_side_markers = draw(frame_side, charucoCorners, imgpts)
+            # cv2.imshow('frame_side_markers', frame_side_markers)
 
 
-        markers_phantom = find_phantom_markers(frame_side)
-        points_phantom = np.array([[0,0,0],[0,5.16,0],[3.9,0,0], [7.75,0,0]],dtype=np.float32)
-
-        # print("object points",points_phantom)
-        # print("markers",markers_phantom)
-        ret, rvecs_phantom, tvecs_phantom, inliers_phantom = cv2.solvePnPRansac(points_phantom, markers_phantom, mat_left, dist_left)
-        print("rvecs_phantom", rvecs_phantom)
-        print("tvecs_phantom", tvecs_phantom*0.01)
-        # project 3D points to image plane
-        imgpts_phantom, jac = cv2.projectPoints(axis, rvecs_phantom, tvecs_phantom, mat_left, dist_left)
-        frame_side_markers_phantom = draw(frame_side, markers_phantom, imgpts_phantom)
-        cv2.imshow('frame_side_markers_phantom', frame_side_markers_phantom)
+        # ret, corners = cv2.findChessboardCorners(gray, (9, 7), None)
+        #
+        # if ret == True:
+        #     print("Found corners")
+        #     corners2 = cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
+        #
+        #     # Find the rotation and translation vectors.
+        #     print("objp", objp)
+        #     print("corners2",corners2)
+        #     ret, rvecs, tvecs, inliers = cv2.solvePnPRansac(objp, corners2, mat_left, dist_left)
+        #
+        #     rmat, _ = cv2.Rodrigues(rvecs)
+        #
+        #     transform_homogeneous = np.concatenate((np.concatenate((rmat, tvecs*square_size), axis=1), np.array([[0,0,0,1]])), axis=0)
+        #     print(transform_homogeneous)
+        #
+        #     # project 3D points to image plane
+        #     imgpts, jac = cv2.projectPoints(axis, rvecs, tvecs, mat_left, dist_left)
+        #     frame_side_markers = draw(frame_side, corners2, imgpts)
+        #     cv2.imshow('frame_side_markers', frame_side_markers)
+        #
+        #
+        # markers_phantom = find_phantom_markers(frame_side)
+        # points_phantom = np.array([[0,0,0],[0,5.16,0],[3.9,0,0], [7.75,0,0]],dtype=np.float32)
+        #
+        # # print("object points",points_phantom)
+        # # print("markers",markers_phantom)
+        # ret, rvecs_phantom, tvecs_phantom, inliers_phantom = cv2.solvePnPRansac(points_phantom, markers_phantom, mat_left, dist_left)
+        # print("rvecs_phantom", rvecs_phantom)
+        # print("tvecs_phantom", tvecs_phantom*0.01)
+        # # project 3D points to image plane
+        # imgpts_phantom, jac = cv2.projectPoints(axis, rvecs_phantom, tvecs_phantom, mat_left, dist_left)
+        # frame_side_markers_phantom = draw(frame_side, markers_phantom, imgpts_phantom)
+        # cv2.imshow('frame_side_markers_phantom', frame_side_markers_phantom)
 
 
         cv2.imshow('Camera Top', frame_top_markers)

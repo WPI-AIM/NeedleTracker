@@ -273,6 +273,9 @@ def main():
 
     plotter = plot3dClass(5,5)
 
+    time_last = time.clock()
+    time_delta = 0
+
     while cap_top.isOpened():
         ret, camera_top_current_frame = cap_top.read()
         ret, camera_side_current_frame = cap_side.read()
@@ -287,6 +290,7 @@ def main():
 
         tracker_side.update(side_frames)
         tracker_top.update(top_frames)
+
 
         if use_target_segmentation:
             target_top.update(camera_top_current_frame)
@@ -409,6 +413,10 @@ def main():
 
         delta_last = delta
         position_tip_last = position_tip
+
+        time_delta = time.clock() - time_last
+        time_last = time.clock()
+        print("Time to process: " + str(time_delta))
 
     if s is not None:
         s.close()

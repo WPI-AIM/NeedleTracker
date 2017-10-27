@@ -227,9 +227,9 @@ def main():
 
     cv2.namedWindow("Camera Top")
     cv2.namedWindow("Camera Side")
-
-    cv2.setMouseCallback("Camera Top", get_coords_top)
-    cv2.setMouseCallback("Camera Side", get_coords_side)
+    #
+    # cv2.setMouseCallback("Camera Top", get_coords_top)
+    # cv2.setMouseCallback("Camera Side", get_coords_side)
 
     frames_since_update = 0
 
@@ -254,7 +254,7 @@ def main():
                              int(root.find("kernel_top").text), "camera_top", verbose=False)
     tracker_side = tracking.TipTracker(camera_side_farneback_parameters, camera_side_width, camera_side_height,
                               hue_target, hue_target_range, camera_side_roi_center, camera_side_roi_size,
-                              int(root.find("kernel_side").text), "camera_side", verbose=True)
+                              int(root.find("kernel_side").text), "camera_side", verbose=False)
 
     phantom_dims = np.array([0.25, 0.0579, 0.0579]) # length is actually 0.12675 meters
     phantom_transform = np.eye(4)
@@ -271,12 +271,13 @@ def main():
     triangulator_tip = tracking.Triangulator(p1, p2)
     triangulator_target = tracking.Triangulator(p1, p2)
 
-    plotter = plot3dClass(5,5)
+    # plotter = plot3dClass(5,5)
 
     time_last = time.clock()
-    time_delta = 0
+
 
     while cap_top.isOpened():
+        times = []
         ret, camera_top_current_frame = cap_top.read()
         ret, camera_side_current_frame = cap_side.read()
         # ret, aux_frame = cap_aux.read()
@@ -291,12 +292,16 @@ def main():
         tracker_side.update(side_frames)
         tracker_top.update(top_frames)
 
+        time_delta = time.clock() - time_last
+        time_last = time.clock()
+        times.append(time_delta)
+        print("2D Localization: " + str(time_delta))
 
         if use_target_segmentation:
             target_top.update(camera_top_current_frame)
             target_side.update(camera_side_current_frame)
-            cv2.imshow("Target top", target_top.image_masked)
-            cv2.imshow("Target side", target_side.image_masked)
+            # cv2.imshow("Target top", target_top.image_masked)
+            # cv2.imshow("Target side", target_side.image_masked)
         else:
             target_top.target_coords = TARGET_TOP
             target_side.target_coords = TARGET_SIDE
@@ -313,17 +318,23 @@ def main():
         position_target = triangulator_target.get_position_3D(target_top.target_coords, target_side.target_coords)
 
         success_compensation, position_tip_corrected = compensator_tip.solve_real_point_from_refracted(np.ravel(position_tip))
+
+        time_delta = time.clock() - time_last
+        time_last = time.clock()
+        times.append(time_delta)
+        print("Triangulation/Refraction: " + str(time_delta))
+
         # position_tip_corrected = np.reshape(position_tip_corrected_temp,(3,1))
         # success_compensation, position_target_corrected = np.reshape(compensator.solve_real_point_from_refracted(np.ravel(position_target)),(3,1))
-        if success_compensation:
-            compensator_tip.make_plot()
+        # if success_compensation:
+        #     compensator_tip.make_plot()
         #
         # success_compensation, position_target_corrected = compensator_target.solve_real_point_from_refracted(np.ravel(position_target))
         # if success_compensation:
         #     compensator_target.make_plot()
 
-        print("Position top raw", position_tip)
-        print("Position tip corrected", position_tip_corrected)
+        # print("Position top raw", position_tip)
+        # print("Position tip corrected", position_tip_corrected)
 
         delta = position_target - position_tip
         # delta_tform = transform_to_robot_coords(delta)
@@ -350,7 +361,7 @@ def main():
             # print('Target tform: ' + str(transform_to_robot_coords(target3D)))
             # print('Delta tform: ' + str(transform_to_robot_coords(delta)))
             #
-            plotter.drawNow(position_tip)
+            # plotter.drawNow(position_tip)
             trajectory.append(delta)
             # print("Adding point to path")
             top_path.append(tracker_top.position_tip)
@@ -364,6 +375,11 @@ def main():
         if use_connection and SEND_MESSAGES:
             s.send(compose_OpenIGTLink_message(pose_tip))
             s.send(compose_OpenIGTLink_message(pose_target))
+
+        time_delta = time.clock() - time_last
+        time_last = time.clock()
+        times.append(time_delta)
+        print("Comms: " + str(time_delta))
 
         cv2.imshow('Camera Top', camera_top_current_frame)
         cv2.imshow('Camera Side', camera_side_current_frame)
@@ -416,7 +432,9 @@ def main():
 
         time_delta = time.clock() - time_last
         time_last = time.clock()
-        print("Time to process: " + str(time_delta))
+        times.append(time_delta)
+        print("Diagnostics: " + str(time_delta))
+        print("Total: " + str(sum(times)) + "\n")
 
     if s is not None:
         s.close()

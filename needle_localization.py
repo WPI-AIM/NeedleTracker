@@ -176,8 +176,8 @@ def main():
     camera_top_height, camera_top_width, channels = camera_top_last_frame.shape
     camera_side_height, camera_side_width, channels = camera_side_last_frame.shape
 
-    camera_top_roi_size = (200, 350)
-    camera_side_roi_size = (200, 350)
+    camera_top_roi_size = (200, 200)
+    camera_side_roi_size = (200, 200)
     # camera_top_roi_size = (camera_top_width, camera_top_height)
     # camera_side_roi_size = camera_top_roi_size
 
@@ -283,7 +283,7 @@ def main():
         # ret, aux_frame = cap_aux.read()
         aux_frame = None
 
-        if cv2.waitKey(10) == ord('q') or camera_top_current_frame is None or camera_side_current_frame is None:
+        if cv2.waitKey(1) == ord('q') or camera_top_current_frame is None or camera_side_current_frame is None:
             break
 
         top_frames.append(camera_top_current_frame)

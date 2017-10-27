@@ -384,11 +384,11 @@ def main():
         cv2.imshow('Camera Top', camera_top_current_frame)
         cv2.imshow('Camera Side', camera_side_current_frame)
 
-        cv2.imshow("Flow Mag Top", tracker_top.flow_mag)
-        cv2.imshow("Flow Mag Side", tracker_side.flow_mag)
-
-        cv2.imshow("Cam Top Thresh", tracker_top.image_current_gray_thresh)
-        cv2.imshow("Cam Side Thresh", tracker_side.image_current_gray_thresh)
+        # cv2.imshow("Flow Mag Top", tracker_top.flow_mag)
+        # cv2.imshow("Flow Mag Side", tracker_side.flow_mag)
+        #
+        # cv2.imshow("Cam Top Thresh", tracker_top.image_current_gray_thresh)
+        # cv2.imshow("Cam Side Thresh", tracker_side.image_current_gray_thresh)
 
         font = cv2.FONT_HERSHEY_DUPLEX
         text_color = (0, 255, 0)

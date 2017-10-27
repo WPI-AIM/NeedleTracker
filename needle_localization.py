@@ -16,6 +16,7 @@ from collections import deque
 import yaml
 import refraction
 import tracking
+import serial
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -95,6 +96,8 @@ def main():
     if use_connection:
         print('Connecting to ' + ip_address + ' port ' + str(port) + '...')
         s.connect((ip_address, port))
+
+    arduino = serial.Serial('/dev/ttyACM0', 9600, timeout=.5)
 
     bashCommand = 'mkdir -p ' + output_path
     process4 = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
@@ -362,6 +365,7 @@ def main():
             # print('Delta tform: ' + str(transform_to_robot_coords(delta)))
             #
             # plotter.drawNow(position_tip)
+            arduino.write('1')
             position_tip_time = np.concatenate(([[time.clock()]], position_tip))
             print(position_tip_time)
             trajectory.append(position_tip_time)

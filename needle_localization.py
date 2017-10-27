@@ -362,7 +362,9 @@ def main():
             # print('Delta tform: ' + str(transform_to_robot_coords(delta)))
             #
             # plotter.drawNow(position_tip)
-            trajectory.append(delta)
+            position_tip_time = np.concatenate(([[time.clock()]], position_tip))
+            print(position_tip_time)
+            trajectory.append(position_tip_time)
             # print("Adding point to path")
             top_path.append(tracker_top.position_tip)
             side_path.append(tracker_side.position_tip)

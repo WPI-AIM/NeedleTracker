@@ -111,7 +111,21 @@ def main():
                   + ' -d /dev/video2 -c focus_auto=0 focus_absolute=' + str(camera_side_focus_absolute)\
                   + ' contrast=' + str(camera_side_contrast) + ' brightness='+ str(camera_side_brightness)\
                   + ' v4l2-ctl -d /dev/video3 -c focus_auto=0 focus_absolute=60'
-        process1 = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+        # command = 'v4l2-ctl -d /dev/video1 -c focus_auto=0'
+        # print(command)
+        # process1 = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+        # cv2.waitKey(100)
+        # command = 'v4l2-ctl -d /dev/video2 -c focus_auto=0'
+        # print(command)
+        # process1 = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+        # cv2.waitKey(100)
+        # command = 'v4l2-ctl -d /dev/video1 -c focus_absolute=' + str(camera_top_focus_absolute)\
+        #           + ' contrast='+ str(camera_top_contrast) + ' brightness='+ str(camera_top_brightness)
+        # process2 = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+        # cv2.waitKey(100)
+        # command = 'v4l2-ctl -d /dev/video2 -c focus_absolute=' + str(camera_side_focus_absolute)\
+        #           + ' contrast=' + str(camera_side_contrast) + ' brightness='+ str(camera_side_brightness)
+        process3 = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         cv2.waitKey(100)
 
         cap_top = cv2.VideoCapture(1)  # Top camera
@@ -250,10 +264,12 @@ def main():
                                        0)
 
     tracker_top = tracking.TipTracker(camera_top_farneback_parameters, camera_top_width, camera_top_height,
-                             hue_target, hue_target_range, camera_top_roi_center, camera_top_roi_size,
+                             hue_target, hue_target_range, int(root.find("threshold_mag").text),
+                             camera_top_roi_center, camera_top_roi_size,
                              int(root.find("kernel_top").text), "camera_top", verbose=False)
     tracker_side = tracking.TipTracker(camera_side_farneback_parameters, camera_side_width, camera_side_height,
-                              hue_target, hue_target_range, camera_side_roi_center, camera_side_roi_size,
+                              hue_target, hue_target_range, int(root.find("threshold_mag").text),
+                              camera_side_roi_center, camera_side_roi_size,
                               int(root.find("kernel_side").text), "camera_side", verbose=False)
 
     phantom_dims = np.array([0.25, 0.0579, 0.0579]) # length is actually 0.12675 meters

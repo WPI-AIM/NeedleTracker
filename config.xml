@@ -19,6 +19,8 @@
 	<kernel_top>5</kernel_top>
 	<kernel_side>5</kernel_side>
 
+	<threshold_mag>3</threshold_mag>
+
 	<dof_top>
 		<pyr_scale>0.5</pyr_scale>
 		<levels>4</levels>

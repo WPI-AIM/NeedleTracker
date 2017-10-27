@@ -3,7 +3,7 @@ import numpy as np
 
 class TipTracker:
     def __init__(self, params, image_width, image_height, heading_expected,
-                 heading_range, roi_center_initial, roi_size, kernel_size, name="camera", verbose=False):
+                 heading_range, threshold_mag, roi_center_initial, roi_size, kernel_size, name="camera", verbose=False):
 
         self.flow_params = params
         self.heading = heading_expected
@@ -17,6 +17,7 @@ class TipTracker:
         self.name = name
         self.kernel_size = kernel_size
         self.verbose = verbose
+        self.threshold_mag = threshold_mag
 
         self.heading_insert_bound_lower = (self.heading - (self.heading_range / 2))%180
         self.heading_insert_bound_upper = (self.heading + (self.heading_range / 2))%180
@@ -78,14 +79,13 @@ class TipTracker:
 
     def _filter_by_heading(self, flow_hsv):
         max_value = 255
-        threshold_magnitude = 5
 
-        flow_hsv_insert_bound_lower = np.array([self.heading_insert_bound_lower, 50, threshold_magnitude])
+        flow_hsv_insert_bound_lower = np.array([self.heading_insert_bound_lower, 50, self.threshold_mag])
         flow_hsv_insert_bound_upper = np.array([self.heading_insert_bound_upper, 255, max_value])
 
         mask_insert = cv2.inRange(flow_hsv, flow_hsv_insert_bound_lower, flow_hsv_insert_bound_upper)
 
-        flow_hsv_retract_bound_lower = np.array([self.heading_retract_bound_lower, 50, threshold_magnitude])
+        flow_hsv_retract_bound_lower = np.array([self.heading_retract_bound_lower, 50, self.threshold_mag])
         flow_hsv_retract_bound_upper = np.array([self.heading_retract_bound_upper, 255, max_value])
 
         mask_retract = cv2.inRange(flow_hsv, flow_hsv_retract_bound_lower, flow_hsv_retract_bound_upper)

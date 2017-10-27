@@ -227,9 +227,9 @@ def main():
 
     cv2.namedWindow("Camera Top")
     cv2.namedWindow("Camera Side")
-    #
-    # cv2.setMouseCallback("Camera Top", get_coords_top)
-    # cv2.setMouseCallback("Camera Side", get_coords_side)
+
+    cv2.setMouseCallback("Camera Top", get_coords_top)
+    cv2.setMouseCallback("Camera Side", get_coords_side)
 
     frames_since_update = 0
 

@@ -70,23 +70,28 @@ class TipTracker:
         hsv[..., 1] = 255
 
         hsv[..., 0] = ((flow_angle+90)%360 * (180 / np.pi)) * 0.5
-        hsv[..., 2] = cv2.normalize(flow_magnitude, None, 0, 255, cv2.NORM_MINMAX)
+        # hsv[..., 2] = cv2.normalize(flow_magnitude, None, 0, 255, cv2.NORM_MINMAX) #TODO: Change this!
+        hsv[..., 2] = flow_magnitude
+
         bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+        print(np.max(flow_magnitude), np.std(flow_magnitude), np.mean(flow_magnitude))
         return hsv, bgr, flow_magnitude
 
     def _filter_by_heading(self, flow_hsv):
-        min_value = flow_hsv[..., 2].min()
+        # min_value = flow_hsv[..., 2].min()
         # max_value = flow_hsv[..., 2].max()
+        # stdev = flow_hsv[..., 2].std()
         max_value = 255
-        mean_value = flow_hsv[..., 2].mean()
+        threshold_magnitude = 5
+        # mean_value = flow_hsv[..., 2].mean()
 
 
-        flow_hsv_insert_bound_lower = np.array([self.heading_insert_bound_lower, 50, int(max_value * 0.7)])
+        flow_hsv_insert_bound_lower = np.array([self.heading_insert_bound_lower, 50, threshold_magnitude])
         flow_hsv_insert_bound_upper = np.array([self.heading_insert_bound_upper, 255, max_value])
 
         mask_insert = cv2.inRange(flow_hsv, flow_hsv_insert_bound_lower, flow_hsv_insert_bound_upper)
 
-        flow_hsv_retract_bound_lower = np.array([self.heading_retract_bound_lower, 50, int(max_value * 0.7)])
+        flow_hsv_retract_bound_lower = np.array([self.heading_retract_bound_lower, 50, threshold_magnitude])
         flow_hsv_retract_bound_upper = np.array([self.heading_retract_bound_upper, 255, max_value])
 
         mask_retract = cv2.inRange(flow_hsv, flow_hsv_retract_bound_lower, flow_hsv_retract_bound_upper)

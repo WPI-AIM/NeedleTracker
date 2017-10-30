@@ -101,7 +101,7 @@ def main():
 
     arduino = None
     if use_arduino:
-        arduino = serial.Serial('/dev/ttyACM0', 9600, timeout=.5)
+        arduino = serial.Serial('/dev/ttyACM0', 19200, timeout=.5)
 
     bashCommand = 'mkdir -p ' + output_path
     process4 = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
@@ -370,7 +370,7 @@ def main():
             #
             # plotter.drawNow(position_tip)
             if arduino is not None:
-                arduino.write('1')
+                arduino.write('1\n')
             position_tip_time = np.concatenate(([[time.clock()]], position_tip))
             print(position_tip_time)
             trajectory.append(position_tip_time)

@@ -14,6 +14,8 @@ import argparse
 import xml.etree.ElementTree as ET
 import yaml
 from collections import deque
+import serial
+
 
 # Parse commang line arguments. These are primarily flags for things likely to change between runs.
 parser = argparse.ArgumentParser(description='Register cameras and phantom to global coordinate frame.')
@@ -25,6 +27,8 @@ parser.add_argument('--load_video_path', type=str, nargs=1, default='./data/test
                     help='Path for video to load if --use_recorded_video is specified.')
 parser.add_argument('--square_size', type=float, nargs=1, default=0.0060175,
                     help='Calibration checkerboard square edge length')
+parser.add_argument('--use_arduino', action='store_true',
+                    help='Trigger an Arduino over USB, to facilitate data logging with external tracking hardware.')
 args = parser.parse_args()
 globals().update(vars(args))
 
@@ -36,19 +40,23 @@ port = int(root.find("port").text)
 def main():
     global STATE
     # TODO: Load a primitive rectangular prism representing the phantom
+    arduino = None
+    if use_arduino:
+        arduino = serial.Serial('/dev/ttyACM0', 19200, timeout=.5)
+
 
     if not use_recorded_video:
         # For both cameras, turn off autofocus and set the same absolute focal depth the one used during calibration.
         command = 'v4l2-ctl -d /dev/video1 -c focus_auto=0'
         process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         cv2.waitKey(100)
-        command = 'v4l2-ctl -d /dev/video1 -c focus_absolute=20'
+        command = 'v4l2-ctl -d /dev/video1 -c focus_absolute=30'
         process1 = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         cv2.waitKey(100)
         command = 'v4l2-ctl -d /dev/video2 -c focus_auto=0'
         process2 = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         cv2.waitKey(100)
-        command = 'v4l2-ctl -d /dev/video2 -c focus_absolute=60'
+        command = 'v4l2-ctl -d /dev/video2 -c focus_absolute=30'
         process3 = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         cv2.waitKey(100)
 
@@ -72,8 +80,11 @@ def main():
     dist_left = yaml_to_mat(cal_left.distortion_coefficients)
     dist_right = yaml_to_mat(cal_right.distortion_coefficients)
 
-    trans_right = np.array([[-0.0016343138898400025], [-0.13299820438398743], [0.1312384027069722]])
-    rot_right = np.array([0.9915492807737206, 0.03743949685116827, -0.12421073976371574, 0.12130773650921836, 0.07179373377171916, 0.9900151982945141, 0.04598322368134065, -0.9967165815148494, 0.06664532446634884]).reshape((3,3))
+    # trans_right = np.array([[-0.0016343138898400025], [-0.13299820438398743], [0.1312384027069722]])
+    trans_right = np.array([[0.0003711532223565725], [-0.1319298883713302], [0.14078849901180754]])
+
+    # rot_right = np.array([0.9915492807737206, 0.03743949685116827, -0.12421073976371574, 0.12130773650921836, 0.07179373377171916, 0.9900151982945141, 0.04598322368134065, -0.9967165815148494, 0.06664532446634884]).reshape((3,3))
+    rot_right = np.array([0.9963031037938386, 0.020474484541114755, -0.08343213321939816, 0.08244848983771232, 0.044926951083412256, 0.9955821490915903, 0.024132382688918215, -0.9987804386095697, 0.04307277047777709]).reshape((3,3))
 
     p1 = np.concatenate((np.dot(mat_left, np.eye(3)), np.dot(mat_left, np.zeros((3,1)))), axis=1)
     p2 = np.concatenate((np.dot(mat_right, rot_right), np.dot(mat_right, trans_right)), axis=1)
@@ -109,13 +120,24 @@ def main():
     transform_deltas.append(np.eye(4))
 
     # dpi = 200.0
-    square_width = 0.007
-    marker_width = square_width * 0.5
+    # square_width = 0.007
+    # marker_width = square_width * 0.5
+    # squares_wide = 7
+    # squares_high = 9
+
+    square_width = 0.00975
+    marker_width = square_width * 0.75
     squares_wide = 7
     squares_high = 9
+
     # in_per_m = 1 / 2.54 * 100
     dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
     board = cv2.aruco.CharucoBoard_create(squares_wide, squares_high, square_width, marker_width, dictionary)
+
+    transforms = []
+    times = []
+
+    time_start = time.clock()
 
     while cap_top.isOpened():
         ret, frame_top = cap_top.read()
@@ -155,6 +177,10 @@ def main():
             # print(rvec, '\n')
             if ret:
                 # print(rvec)
+                if arduino is not None:
+                    arduino.write('1\n')
+                times.append(time.clock() - time_start)
+
                 rmat, _ = cv2.Rodrigues(np.array(rvec, dtype=np.float32))
                 transform_homogeneous = np.concatenate(
                     (np.concatenate((rmat, tvec), axis=1), np.array([[0, 0, 0, 1]])), axis=0)
@@ -163,6 +189,10 @@ def main():
                 # print(transform_delta)
                 transform_deltas.append(transform_delta)
                 transform_homogeneous_last = transform_homogeneous
+
+                transforms.append(transform_homogeneous)
+
+                frame_side = cv2.aruco.drawAxis(image=frame_side, cameraMatrix=mat_left, distCoeffs=dist_left, rvec=rvec, tvec=tvec, length=0.03)
 
             # imgpts, jac = cv2.projectPoints(axis, rvec, tvec, mat_left, dist_left)
             # frame_side_markers = draw(frame_side, charucoCorners, imgpts)
@@ -173,6 +203,8 @@ def main():
 
     if use_connection:
         s.send(make_OIGTL_homogeneous_tform(transform_homogeneous))
+
+    np.savez_compressed("./transforms.npz", transforms=transforms, times=times)
 
     cap_top.release()
     cap_side.release()

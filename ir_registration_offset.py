@@ -49,6 +49,7 @@ transform_mean = np.concatenate((normalize(np.mean(transforms_array[:,:,0], axis
                 normalize(np.mean(transforms_array[:,:,2], axis=0)).reshape((4,1)),
                 np.mean(transforms_array[:,:,3], axis=0).reshape((4,1))), axis=1)
 print(transform_mean)
+np.savez_compressed("./transform_checkerboard_to_optitrack.npz", transform=transform_mean)
 
 
 

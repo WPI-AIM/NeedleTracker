@@ -26,4 +26,4 @@ transform_mean = np.concatenate((normalize(np.mean(transforms_array[:,:,0], axis
                 np.mean(transforms_array[:,:,3], axis=0).reshape((4,1))), axis=1)
 print('\n')
 print(transform_mean)
-np.savez_compressed("./transform_tip.npz", transform=transform_mean)
+np.savez_compressed("./data/transform_tip.npz", transform=transforms_homogeneous[-1])

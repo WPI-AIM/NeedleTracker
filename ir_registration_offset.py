@@ -4,7 +4,7 @@ def normalize(input):
     return np.array(input / np.linalg.norm(input))
 
 
-data_optitrack = np.genfromtxt('/media/jgschornak/Data/2017-10-30 Needle Tip Tracking/Global Frame Offset.csv', delimiter=',', skip_header=7)
+data_optitrack_registration_checkerboard = np.genfromtxt('/media/jgschornak/Data/2017-10-30 Needle Tip Tracking/Global Frame Offset.csv', delimiter=',', skip_header=7)
 
 measurements_optitrack = []
 
@@ -12,12 +12,12 @@ axis_x = np.array([1,0,0]).reshape((1, 3))
 axis_y = np.array([0,1,0]).reshape((1, 3))
 axis_z = np.array([0,0,1]).reshape((1, 3))
 
-for row in range(0, data_optitrack.shape[0]):
-    time = data_optitrack[row, 1]
+for row in range(0, data_optitrack_registration_checkerboard.shape[0]):
+    time = data_optitrack_registration_checkerboard[row, 1]
 
-    position_marker_a = np.array(data_optitrack[row, 10:13]).reshape((1, 3))
-    position_marker_b = np.array(data_optitrack[row,14:17]).reshape((1,3))
-    position_marker_c = np.array(data_optitrack[row, 18:21]).reshape((1, 3))
+    position_marker_a = np.array(data_optitrack_registration_checkerboard[row, 10:13]).reshape((1, 3))
+    position_marker_b = np.array(data_optitrack_registration_checkerboard[row, 14:17]).reshape((1, 3))
+    position_marker_c = np.array(data_optitrack_registration_checkerboard[row, 18:21]).reshape((1, 3))
 
     checkerboard_axis_x = normalize(position_marker_b - position_marker_c).reshape((3,1))
     checkerboard_axis_y = normalize(position_marker_b - position_marker_a).reshape((3,1))
@@ -49,7 +49,7 @@ transform_mean = np.concatenate((normalize(np.mean(transforms_array[:,:,0], axis
                 normalize(np.mean(transforms_array[:,:,2], axis=0)).reshape((4,1)),
                 np.mean(transforms_array[:,:,3], axis=0).reshape((4,1))), axis=1)
 print(transform_mean)
-np.savez_compressed("./transform_checkerboard_to_optitrack.npz", transform=transform_mean)
+np.savez_compressed("./data/transform_checkerboard_to_optitrack.npz", transform=transforms[-1])
 
 
 

@@ -3,16 +3,16 @@
 	<ip>192.168.0.103</ip>
 	<port>18944</port>
 	<output_dir>./data/</output_dir>
-	<prefix>optitrack</prefix>
+	<prefix>ceramic</prefix>
 	<calibration_file>calibration.npz</calibration_file>
 	<hue_target>110</hue_target>
 	<hue_target_range>20</hue_target_range>
 
-	<camera_top_focus_absolute>20</camera_top_focus_absolute>
+	<camera_top_focus_absolute>40</camera_top_focus_absolute>
 	<camera_top_contrast>200</camera_top_contrast>
 	<camera_top_brightness>180</camera_top_brightness>
 
-	<camera_side_focus_absolute>20</camera_side_focus_absolute>
+	<camera_side_focus_absolute>40</camera_side_focus_absolute>
 	<camera_side_contrast>200</camera_side_contrast>
 	<camera_side_brightness>180</camera_side_brightness>
 

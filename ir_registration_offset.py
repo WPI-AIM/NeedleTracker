@@ -37,8 +37,18 @@ measurements_checkerboard = []
 for index in range(0, transforms_checkerboard.shape[0]):
     measurements_checkerboard.append((times_checkerboard[index], transforms_checkerboard[index]))
 
+transforms = []
 for measurement_optitrack in measurements_optitrack:
     # for each optitrack measurement, find the checkerboard measurement taken at nearly the same time
     measurement_checkerboard = min(measurements_checkerboard, key=lambda tup:abs(tup[0]-measurement_optitrack[0]))
-    print np.dot(measurement_checkerboard[1], measurement_optitrack[1])
+    transforms.append(np.dot(measurement_checkerboard[1], measurement_optitrack[1]))
+transforms_array = np.array(transforms)
+print(transforms_array)
+transform_mean = np.concatenate((normalize(np.mean(transforms_array[:,:,0], axis=0)).reshape((4,1)),
+                normalize(np.mean(transforms_array[:,:,1], axis=0)).reshape((4,1)),
+                normalize(np.mean(transforms_array[:,:,2], axis=0)).reshape((4,1)),
+                np.mean(transforms_array[:,:,3], axis=0).reshape((4,1))), axis=1)
+print(transform_mean)
+
+
 

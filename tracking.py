@@ -172,7 +172,7 @@ class TargetTracker:
 
         image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
-        bound_lower = np.array([self.target_hsv/2 - self.target_hsv_range/4, 20, 50])
+        bound_lower = np.array([self.target_hsv/2 - self.target_hsv_range/4, 100, 40])
         bound_upper = np.array([self.target_hsv/2 + self.target_hsv_range/4, 255, 150])
 
         mask = cv2.inRange(image_hsv, bound_lower, bound_upper)
@@ -195,6 +195,7 @@ class TargetTracker:
             contour_largest = contours_sorted[0][1]
 
             M = cv2.moments(contour_largest)
-            cx = int(M['m10'] / M['m00'])
-            cy = int(M['m01'] / M['m00'])
-            self.target_coords = (cx, cy)
+            if M['m00'] > 0.0:
+                cx = int(M['m10'] / M['m00'])
+                cy = int(M['m01'] / M['m00'])
+                self.target_coords = (cx, cy)

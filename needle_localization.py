@@ -305,9 +305,12 @@ def main():
     compensator_tip = refraction.RefractionModeler(camera_a_origin, np.ravel(camera_b_origin), phantom_dims, phantom_transform, 1.2, 1.0)
     # compensator_target = refraction.RefractionModeler(camera_a_origin, np.ravel(camera_b_origin), phantom_dims, phantom_transform, 1.2, 1.0)
 
-    print("Hue target: " + str(hue_target) + " Range: " + str(hue_target_range))
-    target_top = tracking.TargetTracker(hue_target, hue_target_range, None, TARGET_TOP)
-    target_side = tracking.TargetTracker(hue_target, hue_target_range, None, TARGET_SIDE)
+
+    target_hue = 50
+    target_hue_range = 20
+    print("Hue target: " + str(target_hue) + " Range: " + str(target_hue))
+    target_top = tracking.TargetTracker(target_hue, target_hue_range, None, TARGET_TOP)
+    target_side = tracking.TargetTracker(target_hue, target_hue_range, None, TARGET_SIDE)
 
     triangulator_tip = tracking.Triangulator(p1, p2)
     triangulator_target = tracking.Triangulator(p1, p2)
@@ -341,8 +344,8 @@ def main():
         if use_target_segmentation:
             target_top.update(camera_top_current_frame)
             target_side.update(camera_side_current_frame)
-            # cv2.imshow("Target top", target_top.image_masked)
-            # cv2.imshow("Target side", target_side.image_masked)
+            cv2.imshow("Target top", target_top.image_masked)
+            cv2.imshow("Target side", target_side.image_masked)
         else:
             target_top.target_coords = TARGET_TOP
             target_side.target_coords = TARGET_SIDE

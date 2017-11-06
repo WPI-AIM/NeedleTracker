@@ -396,15 +396,6 @@ def main():
             pose_tip = make_homogeneous_tform(rotation=rotation_tip, translation=position_tip)
             pose_target = make_homogeneous_tform(translation=position_tip)
 
-            # if delta_last is not None:
-            #     if not np.array_equal(delta, delta_last):
-            #         frames_since_update = 0
-            #         magnitude = np.linalg.norm(delta - delta_last)
-            #         if magnitude <= MAG_THRESHOLD and frames_since_update <= FRAME_THRESHOLD:
-            #             SEND_MESSAGES = True
-            #     else:
-            #         SEND_MESSAGES = False
-            #         frames_since_update += 1
             SEND_MESSAGES = True
 
             if not np.array_equal(position_tip, position_tip_last):

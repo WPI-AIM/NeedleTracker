@@ -391,7 +391,7 @@ def main():
 
             delta = position_target - position_tip
             # delta_tform = transform_to_robot_coords(delta)
-            rotation_tip = np.eye(3)
+            rotation_tip = np.array([[0.99,0,0.1],[0.01,0.99,0],[0,0.01,0.99]])
 
             pose_tip = make_homogeneous_tform(rotation=rotation_tip, translation=position_tip)
             pose_target = make_homogeneous_tform(translation=position_tip)

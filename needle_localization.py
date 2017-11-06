@@ -122,13 +122,13 @@ def main():
         command = 'v4l2-ctl -d /dev/video1 -c focus_auto=0'
         process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         cv2.waitKey(100)
-        command = 'v4l2-ctl -d /dev/video1 -c focus_absolute=30'
+        command = 'v4l2-ctl -d /dev/video1 -c focus_absolute=' + str(camera_top_focus_absolute)
         process1 = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         cv2.waitKey(100)
         command = 'v4l2-ctl -d /dev/video2 -c focus_auto=0'
         process2 = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         cv2.waitKey(100)
-        command = 'v4l2-ctl -d /dev/video2 -c focus_absolute=30'
+        command = 'v4l2-ctl -d /dev/video2 -c focus_absolute=' + str(camera_side_focus_absolute)
         process3 = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         cv2.waitKey(100)
         # command1 = 'v4l2-ctl -d /dev/video1 -c focus_auto=0 focus_absolute=' + str(camera_top_focus_absolute)
@@ -387,18 +387,18 @@ def main():
         pose_tip = make_homogeneous_tform(rotation=rotation_tip, translation=position_tip)
         pose_target = make_homogeneous_tform(translation=position_tip)
 
-        if delta_last is not None:
-            if not np.array_equal(delta, delta_last):
-                frames_since_update = 0
-                magnitude = np.linalg.norm(delta - delta_last)
-                if magnitude <= MAG_THRESHOLD and frames_since_update <= FRAME_THRESHOLD:
-                    SEND_MESSAGES = True
-            else:
-                SEND_MESSAGES = False
-                frames_since_update += 1
-            SEND_MESSAGES = True
+        # if delta_last is not None:
+        #     if not np.array_equal(delta, delta_last):
+        #         frames_since_update = 0
+        #         magnitude = np.linalg.norm(delta - delta_last)
+        #         if magnitude <= MAG_THRESHOLD and frames_since_update <= FRAME_THRESHOLD:
+        #             SEND_MESSAGES = True
+        #     else:
+        #         SEND_MESSAGES = False
+        #         frames_since_update += 1
+        SEND_MESSAGES = True
 
-        if SEND_MESSAGES and not np.array_equal(position_tip, position_tip_last):
+        if not np.array_equal(position_tip, position_tip_last):
             # print('Target: ' + str(target3D))
             # print('Delta: ' + str(delta))
             #

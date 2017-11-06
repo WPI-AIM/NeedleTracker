@@ -3,7 +3,7 @@
 	<ip>192.168.0.103</ip>
 	<port>18944</port>
 	<output_dir>./data/</output_dir>
-	<prefix>ceramic</prefix>
+	<prefix>insertion</prefix>
 	<calibration_file>calibration.npz</calibration_file>
 	<hue_target>110</hue_target>
 	<hue_target_range>20</hue_target_range>

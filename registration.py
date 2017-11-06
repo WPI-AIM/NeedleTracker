@@ -201,10 +201,10 @@ def main():
         cv2.imshow('Camera Top', frame_top_markers)
         cv2.imshow('Camera Side', frame_side_markers)
 
-    if use_connection:
-        s.send(make_OIGTL_homogeneous_tform(transform_homogeneous))
+    # if use_connection:
+    #     s.send(make_OIGTL_homogeneous_tform(transform_homogeneous))
 
-    np.savez_compressed("./transforms.npz", transforms=transforms, times=times)
+    np.savez_compressed("./data/transforms_registration.npz", transforms=transforms, times=times)
 
     cap_top.release()
     cap_side.release()

@@ -74,8 +74,15 @@ def main():
     port = int(root.find("port").text)
     output_dir = str(root.find("output_dir").text)
     output_prefix = str(root.find("prefix").text)
-    hue_target = int(root.find("hue_target").text)
-    hue_target_range = int(root.find("hue_target_range").text)
+    hue_motion = int(root.find("hue_motion").text)
+    hue_motion_range = int(root.find("hue_motion_range").text)
+
+    target_hue_min = int(root.find("hue_target_min").text)
+    target_hue_max = int(root.find("hue_target_max").text)
+    target_sat_min = int(root.find("sat_target_min").text)
+    target_sat_max = int(root.find("sat_target_max").text)
+    target_val_min = int(root.find("val_target_min").text)
+    target_val_max = int(root.find("val_target_max").text)
 
     camera_top_focus_absolute = int(root.find("camera_top_focus_absolute").text)
     camera_top_contrast = int(root.find("camera_top_contrast").text)
@@ -122,13 +129,13 @@ def main():
         command = 'v4l2-ctl -d /dev/video1 -c focus_auto=0'
         process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         cv2.waitKey(100)
-        command = 'v4l2-ctl -d /dev/video1 -c focus_absolute=30'
+        command = 'v4l2-ctl -d /dev/video1 -c focus_absolute=' + str(camera_top_focus_absolute)
         process1 = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         cv2.waitKey(100)
         command = 'v4l2-ctl -d /dev/video2 -c focus_auto=0'
         process2 = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         cv2.waitKey(100)
-        command = 'v4l2-ctl -d /dev/video2 -c focus_absolute=30'
+        command = 'v4l2-ctl -d /dev/video2 -c focus_absolute=' + str(camera_side_focus_absolute)
         process3 = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         cv2.waitKey(100)
         # command1 = 'v4l2-ctl -d /dev/video1 -c focus_auto=0 focus_absolute=' + str(camera_top_focus_absolute)
@@ -289,11 +296,11 @@ def main():
                                        0)
 
     tracker_top = tracking.TipTracker(camera_top_farneback_parameters, camera_top_width, camera_top_height,
-                             hue_target, hue_target_range, int(root.find("threshold_mag").text),
+                             hue_motion, hue_motion_range, int(root.find("threshold_mag").text),
                              camera_top_roi_center, camera_top_roi_size,
                              int(root.find("kernel_top").text), "camera_top", verbose=False)
     tracker_side = tracking.TipTracker(camera_side_farneback_parameters, camera_side_width, camera_side_height,
-                              hue_target, hue_target_range, int(root.find("threshold_mag").text),
+                                       hue_motion, hue_motion_range, int(root.find("threshold_mag").text),
                               camera_side_roi_center, camera_side_roi_size,
                               int(root.find("kernel_side").text), "camera_side", verbose=False)
 
@@ -306,11 +313,12 @@ def main():
     # compensator_target = refraction.RefractionModeler(camera_a_origin, np.ravel(camera_b_origin), phantom_dims, phantom_transform, 1.2, 1.0)
 
 
-    target_hue = 50
-    target_hue_range = 20
-    print("Hue target: " + str(target_hue) + " Range: " + str(target_hue))
-    target_top = tracking.TargetTracker(target_hue, target_hue_range, None, TARGET_TOP)
-    target_side = tracking.TargetTracker(target_hue, target_hue_range, None, TARGET_SIDE)
+
+    print("Target seg hue range: " + str(target_hue_min) + " to " + str(target_hue_max))
+    target_top = tracking.TargetTracker(target_hue_min, target_hue_max, target_sat_min, target_sat_max,
+                                        target_val_min, target_val_max, None, TARGET_TOP)
+    target_side = tracking.TargetTracker(target_hue_min, target_hue_max, target_sat_min, target_sat_max,
+                                         target_val_min, target_val_max, None, TARGET_SIDE)
 
     triangulator_tip = tracking.Triangulator(p1, p2)
     triangulator_target = tracking.Triangulator(p1, p2)
@@ -321,170 +329,167 @@ def main():
 
 
     while cap_top.isOpened():
-        times = []
-        ret, camera_top_current_frame = cap_top.read()
-        ret, camera_side_current_frame = cap_side.read()
-        # ret, aux_frame = cap_aux.read()
-        aux_frame = None
+        try:
+            times = []
+            ret, camera_top_current_frame = cap_top.read()
+            ret, camera_side_current_frame = cap_side.read()
+            # ret, aux_frame = cap_aux.read()
+            aux_frame = None
 
-        if cv2.waitKey(1) == ord('q') or camera_top_current_frame is None or camera_side_current_frame is None:
-            break
+            if cv2.waitKey(1) == ord('q') or camera_top_current_frame is None or camera_side_current_frame is None:
+                break
 
-        top_frames.append(camera_top_current_frame)
-        side_frames.append(camera_side_current_frame)
+            top_frames.append(camera_top_current_frame)
+            side_frames.append(camera_side_current_frame)
 
-        tracker_side.update(side_frames)
-        tracker_top.update(top_frames)
+            tracker_side.update(side_frames)
+            tracker_top.update(top_frames)
 
-        time_delta = time.clock() - time_last
-        time_last = time.clock()
-        times.append(time_delta)
-        print("2D Localization: " + str(time_delta))
+            time_delta = time.clock() - time_last
+            time_last = time.clock()
+            times.append(time_delta)
+            print("2D Localization: " + str(time_delta))
 
-        if use_target_segmentation:
-            target_top.update(camera_top_current_frame)
-            target_side.update(camera_side_current_frame)
-            cv2.imshow("Target top", target_top.image_masked)
-            cv2.imshow("Target side", target_side.image_masked)
-        else:
-            target_top.target_coords = TARGET_TOP
-            target_side.target_coords = TARGET_SIDE
-
-        camera_top_with_marker = draw_tip_marker(camera_top_current_frame, tracker_top.roi_center,
-                                                 tracker_top.roi_size, tracker_top.position_tip)
-        camera_top_with_marker = draw_target_marker(camera_top_with_marker, target_top.target_coords)
-
-        camera_side_with_marker = draw_tip_marker(camera_side_current_frame, tracker_side.roi_center,
-                                                  tracker_side.roi_size, tracker_side.position_tip)
-        camera_side_with_marker = draw_target_marker(camera_side_with_marker, target_side.target_coords)
-
-        position_tip = triangulator_tip.get_position_3D(tracker_top.position_tip, tracker_side.position_tip)
-        position_target = triangulator_target.get_position_3D(target_top.target_coords, target_side.target_coords)
-
-        success_compensation, position_tip_corrected = compensator_tip.solve_real_point_from_refracted(np.ravel(position_tip))
-
-        time_delta = time.clock() - time_last
-        time_last = time.clock()
-        times.append(time_delta)
-        print("Triangulation/Refraction: " + str(time_delta))
-
-        # position_tip_corrected = np.reshape(position_tip_corrected_temp,(3,1))
-        # success_compensation, position_target_corrected = np.reshape(compensator.solve_real_point_from_refracted(np.ravel(position_target)),(3,1))
-        # if success_compensation:
-        #     compensator_tip.make_plot()
-        #
-        # success_compensation, position_target_corrected = compensator_target.solve_real_point_from_refracted(np.ravel(position_target))
-        # if success_compensation:
-        #     compensator_target.make_plot()
-
-        # print("Position top raw", position_tip)
-        # print("Position tip corrected", position_tip_corrected)
-
-        delta = position_target - position_tip
-        # delta_tform = transform_to_robot_coords(delta)
-        rotation_tip = np.eye(3)
-
-        pose_tip = make_homogeneous_tform(rotation=rotation_tip, translation=position_tip)
-        pose_target = make_homogeneous_tform(translation=position_tip)
-
-        if delta_last is not None:
-            if not np.array_equal(delta, delta_last):
-                frames_since_update = 0
-                magnitude = np.linalg.norm(delta - delta_last)
-                if magnitude <= MAG_THRESHOLD and frames_since_update <= FRAME_THRESHOLD:
-                    SEND_MESSAGES = True
+            if use_target_segmentation:
+                target_top.update(camera_top_current_frame)
+                target_side.update(camera_side_current_frame)
+                cv2.imshow("Target top", target_top.image_masked)
+                cv2.imshow("Target side", target_side.image_masked)
             else:
-                SEND_MESSAGES = False
-                frames_since_update += 1
+                target_top.target_coords = TARGET_TOP
+                target_side.target_coords = TARGET_SIDE
+
+            camera_top_with_marker = draw_tip_marker(camera_top_current_frame, tracker_top.roi_center,
+                                                     tracker_top.roi_size, tracker_top.position_tip)
+            camera_top_with_marker = draw_target_marker(camera_top_with_marker, target_top.target_coords)
+
+            camera_side_with_marker = draw_tip_marker(camera_side_current_frame, tracker_side.roi_center,
+                                                      tracker_side.roi_size, tracker_side.position_tip)
+            camera_side_with_marker = draw_target_marker(camera_side_with_marker, target_side.target_coords)
+
+            position_tip = triangulator_tip.get_position_3D(tracker_top.position_tip, tracker_side.position_tip)
+            position_target = triangulator_target.get_position_3D(target_top.target_coords, target_side.target_coords)
+
+            success_compensation, position_tip_corrected = compensator_tip.solve_real_point_from_refracted(np.ravel(position_tip))
+
+            time_delta = time.clock() - time_last
+            time_last = time.clock()
+            times.append(time_delta)
+            print("Triangulation/Refraction: " + str(time_delta))
+
+            # position_tip_corrected = np.reshape(position_tip_corrected_temp,(3,1))
+            # success_compensation, position_target_corrected = np.reshape(compensator.solve_real_point_from_refracted(np.ravel(position_target)),(3,1))
+            # if success_compensation:
+            #     compensator_tip.make_plot()
+            #
+            # success_compensation, position_target_corrected = compensator_target.solve_real_point_from_refracted(np.ravel(position_target))
+            # if success_compensation:
+            #     compensator_target.make_plot()
+
+            # print("Position top raw", position_tip)
+            # print("Position tip corrected", position_tip_corrected)
+
+            delta = position_target - position_tip
+            # delta_tform = transform_to_robot_coords(delta)
+            rotation_tip = np.array([[0.99,0,0.1],[0.01,0.99,0],[0,0.01,0.99]])
+
+            pose_tip = make_homogeneous_tform(rotation=rotation_tip, translation=position_tip)
+            pose_target = make_homogeneous_tform(translation=position_tip)
+
             SEND_MESSAGES = True
 
-        if SEND_MESSAGES and not np.array_equal(position_tip, position_tip_last):
-            # print('Target: ' + str(target3D))
-            # print('Delta: ' + str(delta))
+            if not np.array_equal(position_tip, position_tip_last):
+                # print('Target: ' + str(target3D))
+                # print('Delta: ' + str(delta))
+                #
+                # print('Target tform: ' + str(transform_to_robot_coords(target3D)))
+                # print('Delta tform: ' + str(transform_to_robot_coords(delta)))
+                #
+                # plotter.drawNow(position_tip)
+                if arduino is not None:
+                    arduino.write('1\n')
+                position_tip_time = np.concatenate(([[time.clock()]], position_tip))
+                print(position_tip_time)
+                trajectory.append(position_tip_time)
+                # print("Adding point to path")
+                top_path.append(tracker_top.position_tip)
+                side_path.append(tracker_side.position_tip)
+
+            camera_top_with_marker = draw_tip_path(camera_top_with_marker, top_path)
+            camera_side_with_marker = draw_tip_path(camera_side_with_marker, side_path)
+
+            # print("Pose tip", pose_tip)
+            # print("Pose target", pose_target)
+            if use_connection and SEND_MESSAGES:
+                print("Sent!")
+                s.send(compose_OpenIGTLink_message(pose_tip))
+                s.send(compose_OpenIGTLink_message(pose_target))
+
+            time_delta = time.clock() - time_last
+            time_last = time.clock()
+            times.append(time_delta)
+            print("Comms: " + str(time_delta))
+
+            cv2.imshow('Camera Top', camera_top_current_frame)
+            cv2.imshow('Camera Side', camera_side_current_frame)
+
+            # cv2.imshow("Flow Mag Top", tracker_top.flow_mag)
+            # cv2.imshow("Flow Mag Side", tracker_side.flow_mag)
             #
-            # print('Target tform: ' + str(transform_to_robot_coords(target3D)))
-            # print('Delta tform: ' + str(transform_to_robot_coords(delta)))
-            #
-            # plotter.drawNow(position_tip)
-            if arduino is not None:
-                arduino.write('1\n')
-            position_tip_time = np.concatenate(([[time.clock()]], position_tip))
-            print(position_tip_time)
-            trajectory.append(position_tip_time)
-            # print("Adding point to path")
-            top_path.append(tracker_top.position_tip)
-            side_path.append(tracker_side.position_tip)
+            # cv2.imshow("Cam Top Thresh", tracker_top.image_current_gray_thresh)
+            # cv2.imshow("Cam Side Thresh", tracker_side.image_current_gray_thresh)
 
-        camera_top_with_marker = draw_tip_path(camera_top_with_marker, top_path)
-        camera_side_with_marker = draw_tip_path(camera_side_with_marker, side_path)
+            font = cv2.FONT_HERSHEY_DUPLEX
+            text_color = (0, 255, 0)
+            data_frame = np.zeros_like(camera_top_with_marker)
 
-        # print("Pose tip", pose_tip)
-        # print("Pose target", pose_target)
-        if use_connection and SEND_MESSAGES:
-            s.send(compose_OpenIGTLink_message(pose_tip))
-            s.send(compose_OpenIGTLink_message(pose_target))
+            cv2.putText(data_frame, 'Delta: ' + make_data_string(delta),
+                        (10, 50), font, 1, text_color)
 
-        time_delta = time.clock() - time_last
-        time_last = time.clock()
-        times.append(time_delta)
-        print("Comms: " + str(time_delta))
+            cv2.putText(data_frame, 'Target: ' + make_data_string(position_target),
+                        (10, 100), font, 1, text_color)
 
-        cv2.imshow('Camera Top', camera_top_current_frame)
-        cv2.imshow('Camera Side', camera_side_current_frame)
+            cv2.putText(data_frame, 'Tip: ' + make_data_string(position_tip),
+                        (10, 150), font, 1, text_color)
 
-        # cv2.imshow("Flow Mag Top", tracker_top.flow_mag)
-        # cv2.imshow("Flow Mag Side", tracker_side.flow_mag)
-        #
-        # cv2.imshow("Cam Top Thresh", tracker_top.image_current_gray_thresh)
-        # cv2.imshow("Cam Side Thresh", tracker_side.image_current_gray_thresh)
+            cv2.putText(data_frame, 'Top  2D: ' + str(tracker_top.position_tip[0]) + ' ' + str(tracker_top.position_tip[1]),
+                        (10, 200), font, 1, text_color)
 
-        font = cv2.FONT_HERSHEY_DUPLEX
-        text_color = (0, 255, 0)
-        data_frame = np.zeros_like(camera_top_with_marker)
+            cv2.putText(data_frame,
+                        'Side 2D: ' + str(tracker_side.position_tip[0]) + ' ' + str(tracker_side.position_tip[1]),
+                        (10, 250), font, 1, text_color)
 
-        cv2.putText(data_frame, 'Delta: ' + make_data_string(delta),
-                    (10, 50), font, 1, text_color)
+            if aux_frame is not None:
+                combined2 = np.concatenate((data_frame, aux_frame), axis=0)
+            else:
+                combined2 = np.concatenate((data_frame, np.zeros_like(data_frame)), axis=0)
 
-        cv2.putText(data_frame, 'Target: ' + make_data_string(position_target),
-                    (10, 100), font, 1, text_color)
+            out_top.write(camera_top_current_frame)
+            out_side.write(camera_side_current_frame)
 
-        cv2.putText(data_frame, 'Tip: ' + make_data_string(position_tip),
-                    (10, 150), font, 1, text_color)
+            combined1 = np.concatenate((camera_top_with_marker, camera_side_with_marker), axis=0)
+            combined = np.array(np.concatenate((combined1, combined2), axis=1), dtype=np.uint8)
 
-        cv2.putText(data_frame, 'Top  2D: ' + str(tracker_top.position_tip[0]) + ' ' + str(tracker_top.position_tip[1]),
-                    (10, 200), font, 1, text_color)
+            combined_flow = np.array(np.concatenate((tracker_top.flow_diagnostic, tracker_side.flow_diagnostic), axis=1), dtype=np.uint8)
+            cv2.imshow('Combined', combined)
+            cv2.imshow('Combined Flow', combined_flow)
+            out_combined.write(combined)
+            out_flow.write(combined_flow)
 
-        cv2.putText(data_frame,
-                    'Side 2D: ' + str(tracker_side.position_tip[0]) + ' ' + str(tracker_side.position_tip[1]),
-                    (10, 250), font, 1, text_color)
+            delta_last = delta
+            position_tip_last = position_tip
 
-        if aux_frame is not None:
-            combined2 = np.concatenate((data_frame, aux_frame), axis=0)
-        else:
-            combined2 = np.concatenate((data_frame, np.zeros_like(data_frame)), axis=0)
-
-        out_top.write(camera_top_current_frame)
-        out_side.write(camera_side_current_frame)
-
-        combined1 = np.concatenate((camera_top_with_marker, camera_side_with_marker), axis=0)
-        combined = np.array(np.concatenate((combined1, combined2), axis=1), dtype=np.uint8)
-
-        combined_flow = np.array(np.concatenate((tracker_top.flow_diagnostic, tracker_side.flow_diagnostic), axis=1), dtype=np.uint8)
-        cv2.imshow('Combined', combined)
-        cv2.imshow('Combined Flow', combined_flow)
-        out_combined.write(combined)
-        out_flow.write(combined_flow)
-
-        delta_last = delta
-        position_tip_last = position_tip
-
-        time_delta = time.clock() - time_last
-        time_last = time.clock()
-        times.append(time_delta)
-        print("Diagnostics: " + str(time_delta))
-        print("Total: " + str(sum(times)) + "\n")
+            time_delta = time.clock() - time_last
+            time_last = time.clock()
+            times.append(time_delta)
+            print("Diagnostics: " + str(time_delta))
+            print("Total: " + str(sum(times)) + "\n")
+        except socket.error, e:
+            print "Error: %s" % e
+            break
 
     if s is not None:
+        print("Closing connection")
         s.close()
 
     cap_top.release()
@@ -502,6 +507,8 @@ def main():
     np.savetxt(output_path + "/trajectory.csv", trajectoryArray, delimiter=",")
     np.savez_compressed(output_path + "/trajectory.npz", trajectory=trajectoryArray,
                         top_path=np.array(top_path), side_path=np.array(side_path))
+
+
 
 class Struct:
     def __init__(self, **entries):
@@ -623,10 +630,10 @@ def make_homogeneous_tform(rotation=np.eye(3), translation=np.zeros((3,1))):
 
 def compose_OpenIGTLink_message(input_tform):
     body = struct.pack('!12f',
-                       float(input_tform((0,0))), float(input_tform((1,0))), float(input_tform((2,0))),
-                       float(input_tform((0, 1))), float(input_tform((1, 1))), float(input_tform((2, 1))),
-                       float(input_tform((0, 2))), float(input_tform((1, 2))), float(input_tform((2, 2))),
-                       float(input_tform((0, 3))), float(input_tform((1, 3))), float(input_tform((2, 3))))
+                       float(input_tform[0,0]), float(input_tform[1,0]), float(input_tform[2,0]),
+                       float(input_tform[0, 1]), float(input_tform[1, 1]), float(input_tform[2, 1]),
+                       float(input_tform[0, 2]), float(input_tform[1, 2]), float(input_tform[2, 2]),
+                       float(input_tform[0, 3]), float(input_tform[1, 3]), float(input_tform[2, 3]))
     bodysize = 48
     return struct.pack('!H12s20sIIQQ', 1, str('TRANSFORM'), str('SIMULATOR'), int(time.time()), 0, bodysize, 0) + body
 

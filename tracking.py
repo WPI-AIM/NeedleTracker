@@ -161,9 +161,13 @@ class Triangulator:
         return (pose_3D_homogeneous / pose_3D_homogeneous[3])[0:3]
 
 class TargetTracker:
-    def __init__(self, target_hsv, target_hsv_range, dims_window, target_coords_initial):
-        self.target_hsv = target_hsv
-        self.target_hsv_range = target_hsv_range
+    def __init__(self, target_hue_min, target_hue_max, target_sat_min, target_sat_max, target_val_min, target_val_max, dims_window, target_coords_initial):
+        self.target_hue_min = target_hue_min
+        self.target_hue_max = target_hue_max
+        self.target_sat_min = target_sat_min
+        self.target_sat_max = target_sat_max
+        self.target_val_min = target_val_min
+        self.target_val_max = target_val_max
         self.dims_window = dims_window
         self.target_coords = target_coords_initial
 
@@ -172,8 +176,8 @@ class TargetTracker:
 
         image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
-        bound_lower = np.array([self.target_hsv/2 - self.target_hsv_range/4, 100, 40])
-        bound_upper = np.array([self.target_hsv/2 + self.target_hsv_range/4, 255, 150])
+        bound_lower = np.array([self.target_hue_min/2, self.target_sat_min, self.target_val_min])
+        bound_upper = np.array([self.target_hue_max/2, self.target_sat_max, self.target_val_max])
 
         mask = cv2.inRange(image_hsv, bound_lower, bound_upper)
 

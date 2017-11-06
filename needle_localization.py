@@ -74,8 +74,15 @@ def main():
     port = int(root.find("port").text)
     output_dir = str(root.find("output_dir").text)
     output_prefix = str(root.find("prefix").text)
-    hue_target = int(root.find("hue_target").text)
-    hue_target_range = int(root.find("hue_target_range").text)
+    hue_motion = int(root.find("hue_motion").text)
+    hue_motion_range = int(root.find("hue_motion_range").text)
+
+    target_hue_min = int(root.find("hue_target_min").text)
+    target_hue_max = int(root.find("hue_target_max").text)
+    target_sat_min = int(root.find("sat_target_min").text)
+    target_sat_max = int(root.find("sat_target_max").text)
+    target_val_min = int(root.find("val_target_min").text)
+    target_val_max = int(root.find("val_target_max").text)
 
     camera_top_focus_absolute = int(root.find("camera_top_focus_absolute").text)
     camera_top_contrast = int(root.find("camera_top_contrast").text)
@@ -289,11 +296,11 @@ def main():
                                        0)
 
     tracker_top = tracking.TipTracker(camera_top_farneback_parameters, camera_top_width, camera_top_height,
-                             hue_target, hue_target_range, int(root.find("threshold_mag").text),
+                             hue_motion, hue_motion_range, int(root.find("threshold_mag").text),
                              camera_top_roi_center, camera_top_roi_size,
                              int(root.find("kernel_top").text), "camera_top", verbose=False)
     tracker_side = tracking.TipTracker(camera_side_farneback_parameters, camera_side_width, camera_side_height,
-                              hue_target, hue_target_range, int(root.find("threshold_mag").text),
+                                       hue_motion, hue_motion_range, int(root.find("threshold_mag").text),
                               camera_side_roi_center, camera_side_roi_size,
                               int(root.find("kernel_side").text), "camera_side", verbose=False)
 
@@ -306,11 +313,12 @@ def main():
     # compensator_target = refraction.RefractionModeler(camera_a_origin, np.ravel(camera_b_origin), phantom_dims, phantom_transform, 1.2, 1.0)
 
 
-    target_hue = 50
-    target_hue_range = 20
-    print("Hue target: " + str(target_hue) + " Range: " + str(target_hue))
-    target_top = tracking.TargetTracker(target_hue, target_hue_range, None, TARGET_TOP)
-    target_side = tracking.TargetTracker(target_hue, target_hue_range, None, TARGET_SIDE)
+
+    print("Target seg hue range: " + str(target_hue_min) + " to " + str(target_hue_max))
+    target_top = tracking.TargetTracker(target_hue_min, target_hue_max, target_sat_min, target_sat_max,
+                                        target_val_min, target_val_max, None, TARGET_TOP)
+    target_side = tracking.TargetTracker(target_hue_min, target_hue_max, target_sat_min, target_sat_max,
+                                         target_val_min, target_val_max, None, TARGET_SIDE)
 
     triangulator_tip = tracking.Triangulator(p1, p2)
     triangulator_target = tracking.Triangulator(p1, p2)
@@ -421,6 +429,7 @@ def main():
         # print("Pose tip", pose_tip)
         # print("Pose target", pose_target)
         if use_connection and SEND_MESSAGES:
+            print("Sent!")
             s.send(compose_OpenIGTLink_message(pose_tip))
             s.send(compose_OpenIGTLink_message(pose_target))
 
@@ -623,10 +632,10 @@ def make_homogeneous_tform(rotation=np.eye(3), translation=np.zeros((3,1))):
 
 def compose_OpenIGTLink_message(input_tform):
     body = struct.pack('!12f',
-                       float(input_tform((0,0))), float(input_tform((1,0))), float(input_tform((2,0))),
-                       float(input_tform((0, 1))), float(input_tform((1, 1))), float(input_tform((2, 1))),
-                       float(input_tform((0, 2))), float(input_tform((1, 2))), float(input_tform((2, 2))),
-                       float(input_tform((0, 3))), float(input_tform((1, 3))), float(input_tform((2, 3))))
+                       float(input_tform[0,0]), float(input_tform[1,0]), float(input_tform[2,0]),
+                       float(input_tform[0, 1]), float(input_tform[1, 1]), float(input_tform[2, 1]),
+                       float(input_tform[0, 2]), float(input_tform[1, 2]), float(input_tform[2, 2]),
+                       float(input_tform[0, 3]), float(input_tform[1, 3]), float(input_tform[2, 3]))
     bodysize = 48
     return struct.pack('!H12s20sIIQQ', 1, str('TRANSFORM'), str('SIMULATOR'), int(time.time()), 0, bodysize, 0) + body
 

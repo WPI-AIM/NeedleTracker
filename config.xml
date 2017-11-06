@@ -1,12 +1,19 @@
 <?xml version="1.0"?>
 <data>
-	<ip>192.168.0.103</ip>
+	<ip>192.168.0.100</ip>
 	<port>18944</port>
 	<output_dir>./data/</output_dir>
 	<prefix>insertion</prefix>
 	<calibration_file>calibration.npz</calibration_file>
-	<hue_target>110</hue_target>
-	<hue_target_range>20</hue_target_range>
+	<hue_motion>110</hue_motion>
+	<hue_motion_range>20</hue_motion_range>
+
+	<hue_target_min>50</hue_target_min>
+	<hue_target_max>55</hue_target_max>
+	<sat_target_min>110</sat_target_min>
+	<sat_target_max>150</sat_target_max>
+	<val_target_min>155</val_target_min>
+	<val_target_max>175</val_target_max>
 
 	<camera_top_focus_absolute>40</camera_top_focus_absolute>
 	<camera_top_contrast>200</camera_top_contrast>

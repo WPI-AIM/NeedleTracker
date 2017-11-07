@@ -210,6 +210,9 @@ def main():
     top_frames = deque(maxlen=3)
     side_frames = deque(maxlen=3)
 
+    transforms_tip = deque(maxlen=2)
+    transforms_tip.append(None)
+
     ret, camera_top_last_frame = cap_top.read()
     ret, camera_side_last_frame = cap_side.read()
 
@@ -394,7 +397,15 @@ def main():
             rotation_tip = np.array([[0.99,0,0.1],[0.01,0.99,0],[0,0.01,0.99]])
 
             pose_tip = make_homogeneous_tform(rotation=rotation_tip, translation=position_tip)
-            pose_target = make_homogeneous_tform(translation=position_tip)
+            pose_target = make_homogeneous_tform(translation=position_target)
+            print(pose_tip)
+
+            if transforms_tip[-1] is not None:
+                direction_motion = normalize(pose_tip[0:3,3] - transforms_tip[-1][0:3,3])
+
+                # print(direction_motion)
+            transforms_tip.append(pose_tip)
+
 
             SEND_MESSAGES = True
 
@@ -409,7 +420,7 @@ def main():
                 if arduino is not None:
                     arduino.write('1\n')
                 position_tip_time = np.concatenate(([[time.clock()]], position_tip))
-                print(position_tip_time)
+                # print(position_tip_time)
                 trajectory.append(position_tip_time)
                 # print("Adding point to path")
                 top_path.append(tracker_top.position_tip)
@@ -608,6 +619,9 @@ def get_coords_side(event, x, y, flags, param):
 
 def transform_to_robot_coords(input):
     return np.array([-input[2], input[1], -input[0]])
+
+def normalize(input):
+    return np.array(input / np.linalg.norm(input))
 
 def is_within_bounds(input):
     x_bound = (-60, 80)

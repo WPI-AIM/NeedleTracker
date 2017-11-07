@@ -211,7 +211,6 @@ def main():
     side_frames = deque(maxlen=3)
 
     transforms_tip = deque(maxlen=2)
-    transforms_tip.append(None)
 
     ret, camera_top_last_frame = cap_top.read()
     ret, camera_side_last_frame = cap_side.read()
@@ -392,24 +391,39 @@ def main():
             # print("Position top raw", position_tip)
             # print("Position tip corrected", position_tip_corrected)
 
-            delta = position_target - position_tip
-            # delta_tform = transform_to_robot_coords(delta)
-            rotation_tip = np.array([[0.99,0,0.1],[0.01,0.99,0],[0,0.01,0.99]])
 
-            pose_tip = make_homogeneous_tform(rotation=rotation_tip, translation=position_tip)
-            pose_target = make_homogeneous_tform(translation=position_target)
-            print(pose_tip)
-
-            if transforms_tip[-1] is not None:
-                direction_motion = normalize(pose_tip[0:3,3] - transforms_tip[-1][0:3,3])
-
-                # print(direction_motion)
-            transforms_tip.append(pose_tip)
 
 
             SEND_MESSAGES = True
 
             if not np.array_equal(position_tip, position_tip_last):
+                delta = position_target - position_tip
+                # delta_tform = transform_to_robot_coords(delta)
+                rotation_tip = np.array([[0.99, 0, 0.1], [0.01, 0.99, 0], [0, 0.01, 0.99]])
+                if len(transforms_tip) is not 0:
+                    direction_motion = normalize(
+                        position_tip.reshape((3, 1)) - transforms_tip[-1][0:3, 3].reshape((3, 1)))
+                    # print(transforms_tip[-1][0:3,3])
+                    # print(position_tip.reshape((3, 1)))
+                    # print(transforms_tip[-1][0:3, 3].reshape((3, 1)))
+                    # print(direction_motion)
+                    axis_y = np.array([0, 1, 0]).reshape((1,3))
+                    axis_z = np.cross(direction_motion.reshape((1,3)), axis_y).reshape((1,3))
+                    # print(axis_z, direction_motion)
+                    axis_y = np.cross(axis_z.reshape((1,3)), direction_motion.reshape((1,3)))
+                    rotation_tip = np.concatenate((direction_motion.reshape((3, 1)), axis_y.reshape((3, 1)), axis_z.reshape((3, 1))), axis=1)
+
+                pose_tip = make_homogeneous_tform(rotation=rotation_tip, translation=position_tip)
+                pose_target = make_homogeneous_tform(translation=position_target)
+                print(pose_tip)
+
+                transforms_tip.append(pose_tip)
+
+
+                if use_connection and SEND_MESSAGES:
+                    print("Sent!")
+                    s.send(compose_OpenIGTLink_message(pose_tip))
+                    s.send(compose_OpenIGTLink_message(pose_target))
                 # print('Target: ' + str(target3D))
                 # print('Delta: ' + str(delta))
                 #
@@ -431,10 +445,7 @@ def main():
 
             # print("Pose tip", pose_tip)
             # print("Pose target", pose_target)
-            if use_connection and SEND_MESSAGES:
-                print("Sent!")
-                s.send(compose_OpenIGTLink_message(pose_tip))
-                s.send(compose_OpenIGTLink_message(pose_target))
+
 
             time_delta = time.clock() - time_last
             time_last = time.clock()

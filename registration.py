@@ -50,13 +50,13 @@ def main():
         command = 'v4l2-ctl -d /dev/video1 -c focus_auto=0'
         process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         cv2.waitKey(100)
-        command = 'v4l2-ctl -d /dev/video1 -c focus_absolute=30'
+        command = 'v4l2-ctl -d /dev/video1 -c focus_absolute=50'
         process1 = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         cv2.waitKey(100)
         command = 'v4l2-ctl -d /dev/video2 -c focus_auto=0'
         process2 = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         cv2.waitKey(100)
-        command = 'v4l2-ctl -d /dev/video2 -c focus_absolute=30'
+        command = 'v4l2-ctl -d /dev/video2 -c focus_absolute=50'
         process3 = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         cv2.waitKey(100)
 
@@ -81,10 +81,11 @@ def main():
     dist_right = yaml_to_mat(cal_right.distortion_coefficients)
 
     # trans_right = np.array([[-0.0016343138898400025], [-0.13299820438398743], [0.1312384027069722]])
-    trans_right = np.array([[0.0003711532223565725], [-0.1319298883713302], [0.14078849901180754]])
-
+    # trans_right = np.array([[0.0003711532223565725], [-0.1319298883713302], [0.14078849901180754]])
+    trans_right = np.array([[0.004782649869753433], [-0.1254748640257181], [0.12769832247248356]])
     # rot_right = np.array([0.9915492807737206, 0.03743949685116827, -0.12421073976371574, 0.12130773650921836, 0.07179373377171916, 0.9900151982945141, 0.04598322368134065, -0.9967165815148494, 0.06664532446634884]).reshape((3,3))
-    rot_right = np.array([0.9963031037938386, 0.020474484541114755, -0.08343213321939816, 0.08244848983771232, 0.044926951083412256, 0.9955821490915903, 0.024132382688918215, -0.9987804386095697, 0.04307277047777709]).reshape((3,3))
+    # rot_right = np.array([0.9963031037938386, 0.020474484541114755, -0.08343213321939816, 0.08244848983771232, 0.044926951083412256, 0.9955821490915903, 0.024132382688918215, -0.9987804386095697, 0.04307277047777709]).reshape((3,3))
+    rot_right = np.array([0.9992146126109057, -0.023280578360311485, 0.03206513084407465, -0.032033636939146785, 0.001724566682061061, 0.9994853035308775, -0.023323894385139918, -0.9997274831377643, 0.0009774506342097424]).reshape((3,3))
 
     p1 = np.concatenate((np.dot(mat_left, np.eye(3)), np.dot(mat_left, np.zeros((3,1)))), axis=1)
     p2 = np.concatenate((np.dot(mat_right, rot_right), np.dot(mat_right, trans_right)), axis=1)
@@ -120,15 +121,15 @@ def main():
     transform_deltas.append(np.eye(4))
 
     # dpi = 200.0
-    # square_width = 0.007
-    # marker_width = square_width * 0.5
-    # squares_wide = 7
-    # squares_high = 9
-
-    square_width = 0.00975
-    marker_width = square_width * 0.75
+    square_width = 0.00661
+    marker_width = square_width * 0.5
     squares_wide = 7
     squares_high = 9
+
+    # square_width = 0.00975
+    # marker_width = square_width * 0.75
+    # squares_wide = 7
+    # squares_high = 9
 
     # in_per_m = 1 / 2.54 * 100
     dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
@@ -145,9 +146,6 @@ def main():
 
         if cv2.waitKey(10) == ord('q') or frame_top is None or frame_side is None:
             break
-
-        frame_top_markers = frame_top
-        frame_side_markers = frame_side
 
         # TODO: Pick three known points on the phantom in the side camera image
         # TODO: Draw a wireframe box representing the phantom on the side camera image to show phantom registration
@@ -191,20 +189,21 @@ def main():
                 transform_homogeneous_last = transform_homogeneous
 
                 transforms.append(transform_homogeneous)
-
+                # frame_side_undistort = cv2.undistort(cameraMatrix=mat_left, distCoeffs=dist_left, src=frame_side)
                 frame_side = cv2.aruco.drawAxis(image=frame_side, cameraMatrix=mat_left, distCoeffs=dist_left, rvec=rvec, tvec=tvec, length=0.03)
 
             # imgpts, jac = cv2.projectPoints(axis, rvec, tvec, mat_left, dist_left)
             # frame_side_markers = draw(frame_side, charucoCorners, imgpts)
             # cv2.imshow('frame_side_markers', frame_side_markers)
 
-        cv2.imshow('Camera Top', frame_top_markers)
-        cv2.imshow('Camera Side', frame_side_markers)
+        # cv2.imshow('Camera Top', frame_top_markers)
+        cv2.imshow('Camera Side', frame_side)
 
     # if use_connection:
-    #     s.send(make_OIGTL_homogeneous_tform(transform_homogeneous))
+    #     s.send(make_OIGTL_homogeneous_tform(transforms[-1]))
 
     np.savez_compressed("./data/transforms_registration.npz", transforms=transforms, times=times)
+    np.savez_compressed("./data/transform_registration_marker.npz", transform_registration_marker = transforms[-1])
 
     cap_top.release()
     cap_side.release()

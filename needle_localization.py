@@ -166,7 +166,9 @@ def main():
 
     # Load stereo calibration data
     # calibration = np.load('calibration_close.npz')
-    calibration = np.load('calibration.npz')
+    # calibration = np.load('calibration.npz')
+
+    transform_camera_to_registration_marker = np.load("./data/transform_registration_marker.npz")['transform_registration_marker']
 
     cal_left = Struct(**yaml.load(file('left.yaml','r')))
     cal_right = Struct(**yaml.load(file('right.yaml', 'r')))
@@ -400,18 +402,28 @@ def main():
                     direction_motion = normalize(
                         position_tip.reshape((3, 1)) - transforms_tip[-1][0:3, 3].reshape((3, 1)))
                     axis_y = np.array([0, 1, 0]).reshape((1,3))
-                    axis_z = np.cross(direction_motion.reshape((1,3)), axis_y).reshape((1,3))
-                    axis_y = np.cross(axis_z.reshape((1,3)), direction_motion.reshape((1,3)))
+                    axis_z = normalize(np.cross(direction_motion.reshape((1,3)), axis_y).reshape((1,3)))
+                    axis_y = normalize(np.cross(axis_z.reshape((1,3)), direction_motion.reshape((1,3))))
                     rotation_tip = np.concatenate((direction_motion.reshape((3, 1)), axis_y.reshape((3, 1)), axis_z.reshape((3, 1))), axis=1)
 
-                pose_tip = make_homogeneous_tform(rotation=rotation_tip, translation=position_tip)
-                pose_target = make_homogeneous_tform(translation=position_target)
-                transforms_tip.append(pose_tip)
+                transform_camera_to_tip = make_homogeneous_tform(rotation=rotation_tip, translation=position_tip)
+                transform_camera_to_target = make_homogeneous_tform(translation=position_target)
+                transforms_tip.append(transform_camera_to_tip)
+
+                transform_registration_marker_to_tip = np.dot(np.linalg.inv(transform_camera_to_registration_marker), transform_camera_to_tip)
+                transform_registration_marker_to_target = np.dot(np.linalg.inv(transform_camera_to_registration_marker), transform_camera_to_target)
+
+                print("Marker to Tip")
+                print(transform_registration_marker_to_tip)
+                print("Marker to Target")
+                print(transform_registration_marker_to_target)
+                print("Tip to Target")
+                print(np.dot(np.linalg.inv(transform_registration_marker_to_tip),transform_registration_marker_to_target))
 
                 if use_connection and SEND_MESSAGES:
                     print("Sent!")
-                    s.send(compose_OpenIGTLink_message(pose_tip))
-                    s.send(compose_OpenIGTLink_message(pose_target))
+                    s.send(compose_OpenIGTLink_message(transform_registration_marker_to_tip))
+                    s.send(compose_OpenIGTLink_message(transform_registration_marker_to_target))
                 # print('Target: ' + str(target3D))
                 # print('Delta: ' + str(delta))
                 #

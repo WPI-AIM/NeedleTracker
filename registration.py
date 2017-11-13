@@ -36,10 +36,16 @@ tree = ET.parse('config.xml')
 root = tree.getroot()
 ip_address = str(root.find("ip").text)
 port = int(root.find("port").text)
+index_camera_side = int(root.find("index_camera_side").text)
 
 def main():
     global STATE
-    # TODO: Load a primitive rectangular prism representing the phantom
+    global use_connection
+    global use_recorded_video
+    global load_video_path
+    global square_size
+    global use_arduino
+
     arduino = None
     if use_arduino:
         arduino = serial.Serial('/dev/ttyACM0', 19200, timeout=.5)
@@ -47,21 +53,21 @@ def main():
 
     if not use_recorded_video:
         # For both cameras, turn off autofocus and set the same absolute focal depth the one used during calibration.
-        command = 'v4l2-ctl -d /dev/video1 -c focus_auto=0'
-        process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
-        cv2.waitKey(100)
-        command = 'v4l2-ctl -d /dev/video1 -c focus_absolute=50'
-        process1 = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
-        cv2.waitKey(100)
-        command = 'v4l2-ctl -d /dev/video2 -c focus_auto=0'
+        # command = 'v4l2-ctl -d /dev/video1 -c focus_auto=0'
+        # process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+        # cv2.waitKey(100)
+        # command = 'v4l2-ctl -d /dev/video1 -c focus_absolute=50'
+        # process1 = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+        # cv2.waitKey(100)
+        command = 'v4l2-ctl -d /dev/video' + str(index_camera_side) + ' -c focus_auto=0'
         process2 = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         cv2.waitKey(100)
-        command = 'v4l2-ctl -d /dev/video2 -c focus_absolute=50'
+        command = 'v4l2-ctl -d /dev/video' + str(index_camera_side) + ' -c focus_absolute=50'
         process3 = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         cv2.waitKey(100)
 
-        cap_top = cv2.VideoCapture(1)  # Top camera
-        cap_side = cv2.VideoCapture(2)  # Side camera
+        # cap_top = cv2.VideoCapture(1)  # Top camera
+        cap_side = cv2.VideoCapture(index_camera_side)  # Side camera
     else:
         # If live video isn't available, use recorded insertion video
         cap_top = cv2.VideoCapture(str(load_video_path + '/output_top.avi'))
@@ -90,7 +96,7 @@ def main():
     p1 = np.concatenate((np.dot(mat_left, np.eye(3)), np.dot(mat_left, np.zeros((3,1)))), axis=1)
     p2 = np.concatenate((np.dot(mat_right, rot_right), np.dot(mat_right, trans_right)), axis=1)
 
-    cv2.namedWindow("Camera Top")
+    # cv2.namedWindow("Camera Top")
     cv2.namedWindow("Camera Side")
 
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
@@ -140,11 +146,11 @@ def main():
 
     time_start = time.clock()
 
-    while cap_top.isOpened():
-        ret, frame_top = cap_top.read()
+    while cap_side.isOpened():
+        # ret, frame_top = cap_top.read()
         ret, frame_side = cap_side.read()
 
-        if cv2.waitKey(10) == ord('q') or frame_top is None or frame_side is None:
+        if cv2.waitKey(10) == ord('q') or frame_side is None:
             break
 
         # TODO: Pick three known points on the phantom in the side camera image
@@ -205,7 +211,7 @@ def main():
     np.savez_compressed("./data/transforms_registration.npz", transforms=transforms, times=times)
     np.savez_compressed("./data/transform_registration_marker.npz", transform_registration_marker = transforms[-1])
 
-    cap_top.release()
+    # cap_top.release()
     cap_side.release()
 
     cv2.destroyAllWindows()

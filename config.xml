@@ -20,11 +20,11 @@
 	<val_target_min>155</val_target_min>
 	<val_target_max>175</val_target_max>
 
-	<camera_top_focus_absolute>40</camera_top_focus_absolute>
+	<camera_top_focus_absolute>50</camera_top_focus_absolute>
 	<camera_top_contrast>200</camera_top_contrast>
 	<camera_top_brightness>180</camera_top_brightness>
 
-	<camera_side_focus_absolute>40</camera_side_focus_absolute>
+	<camera_side_focus_absolute>50</camera_side_focus_absolute>
 	<camera_side_contrast>200</camera_side_contrast>
 	<camera_side_brightness>180</camera_side_brightness>
 

@@ -410,11 +410,21 @@ def main():
             # print("Position top raw", position_tip)
             # print("Position tip corrected", position_tip_corrected)
 
-            SEND_MESSAGES = True
+            # SEND_MESSAGES = True
 
             # Trigger external capture every frame
             if arduino is not None:
                 arduino.write('1\n')
+
+            transform_camera_to_target = make_homogeneous_tform(translation=position_target)
+            transform_registration_marker_to_target = np.dot(np.linalg.inv(transform_camera_to_registration_marker),
+                                                             transform_camera_to_target)
+            print("Marker to Target")
+            print(transform_registration_marker_to_target)
+
+            if use_connection:
+                # print("Sent!")
+                s.send(compose_OpenIGTLink_message(transform_registration_marker_to_target))
 
             if not np.array_equal(position_tip, position_tip_last):
                 delta = position_target - position_tip
@@ -428,23 +438,22 @@ def main():
                     rotation_tip = np.concatenate((direction_motion.reshape((3, 1)), axis_y.reshape((3, 1)), axis_z.reshape((3, 1))), axis=1)
 
                 transform_camera_to_tip = make_homogeneous_tform(rotation=rotation_tip, translation=position_tip)
-                transform_camera_to_target = make_homogeneous_tform(translation=position_target)
+
                 transforms_tip.append(transform_camera_to_tip)
 
                 transform_registration_marker_to_tip = np.dot(np.linalg.inv(transform_camera_to_registration_marker), transform_camera_to_tip)
-                transform_registration_marker_to_target = np.dot(np.linalg.inv(transform_camera_to_registration_marker), transform_camera_to_target)
+
 
                 print("Marker to Tip")
                 print(transform_registration_marker_to_tip)
-                print("Marker to Target")
-                print(transform_registration_marker_to_target)
+
                 print("Tip to Target")
                 print(np.dot(np.linalg.inv(transform_registration_marker_to_tip),transform_registration_marker_to_target))
 
-                if use_connection and SEND_MESSAGES:
-                    print("Sent!")
+                if use_connection:
+                    # print("Sent!")
                     s.send(compose_OpenIGTLink_message(transform_registration_marker_to_tip))
-                    s.send(compose_OpenIGTLink_message(transform_registration_marker_to_target))
+                    # s.send(compose_OpenIGTLink_message(transform_registration_marker_to_target))
                 # print('Target: ' + str(target3D))
                 # print('Delta: ' + str(delta))
                 #

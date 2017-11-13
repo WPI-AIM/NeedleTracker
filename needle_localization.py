@@ -419,6 +419,7 @@ def main():
             transform_camera_to_target = make_homogeneous_tform(translation=position_target)
             transform_registration_marker_to_target = np.dot(np.linalg.inv(transform_camera_to_registration_marker),
                                                              transform_camera_to_target)
+            transform_camera_to_registration_marker[0:3,0:3] = np.eye(3)
             print("Marker to Target")
             print(transform_registration_marker_to_target)
 

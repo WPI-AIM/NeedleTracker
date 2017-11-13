@@ -41,6 +41,8 @@ parser.add_argument('--use_target_segmentation', action='store_true',
                     help='Track the target as the largest blob of the color specified in the config file. Default uses manually-picked point.')
 parser.add_argument('--use_arduino', action='store_true',
                     help='Trigger an Arduino over USB, to facilitate data logging with external tracking hardware.')
+parser.add_argument('--no_registration', action='store_true',
+                    help='Calculate 3D coordinates in the frame of the stereo system.')
 args = parser.parse_args()
 globals().update(vars(args))
 
@@ -66,6 +68,14 @@ def main():
     global SEND_MESSAGES
     global STATE
     global load_video_path
+
+    global use_connection
+    global use_recorded_video
+    global load_video_path
+    global save_video
+    global use_target_segmentation
+    global use_aruino
+    global no_registration
 
     # Load xml config file. This is for values that possibly need to be changed but are likely to stay the same for many runs.
     tree = ET.parse('config.xml')
@@ -167,8 +177,10 @@ def main():
     # Load stereo calibration data
     # calibration = np.load('calibration_close.npz')
     # calibration = np.load('calibration.npz')
-
-    transform_camera_to_registration_marker = np.load("./data/transform_registration_marker.npz")['transform_registration_marker']
+    if no_registration:
+        transform_camera_to_registration_marker = np.eye(4)
+    else:
+        transform_camera_to_registration_marker = np.load("./data/transform_registration_marker.npz")['transform_registration_marker']
 
     cal_left = Struct(**yaml.load(file('left.yaml','r')))
     cal_right = Struct(**yaml.load(file('right.yaml', 'r')))

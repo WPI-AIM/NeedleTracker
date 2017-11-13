@@ -5,6 +5,11 @@
 	<output_dir>./data/</output_dir>
 	<prefix>debug</prefix>
 	<calibration_file>calibration.npz</calibration_file>
+
+	<index_camera_top>1</index_camera_top>
+	<index_camera_side>2</index_camera_side>
+	<index_camera_aux>3</index_camera_aux>
+
 	<hue_motion>110</hue_motion>
 	<hue_motion_range>20</hue_motion_range>
 

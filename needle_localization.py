@@ -102,6 +102,11 @@ def main():
     camera_side_contrast = int(root.find("camera_side_contrast").text)
     camera_side_brightness = int(root.find("camera_side_brightness").text)
 
+    index_camera_top = int(root.find("index_camera_top").text)
+    index_camera_side = int(root.find("index_camera_side").text)
+    index_camera_aux = int(root.find("index_camera_aux").text)
+
+
     dof_params_top = root.find("dof_top")
     dof_params_side = root.find("dof_side")
 
@@ -136,16 +141,16 @@ def main():
         #           + ' contrast=' + str(camera_side_contrast) + ' brightness='+ str(camera_side_brightness)\
         #           + ' v4l2-ctl -d /dev/video3 -c focus_auto=0 focus_absolute=60'
 
-        command = 'v4l2-ctl -d /dev/video1 -c focus_auto=0'
+        command = 'v4l2-ctl -d /dev/video' + str(index_camera_top) + ' -c focus_auto=0'
         process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         cv2.waitKey(100)
-        command = 'v4l2-ctl -d /dev/video1 -c focus_absolute=' + str(camera_top_focus_absolute)
+        command = 'v4l2-ctl -d /dev/video' + str(index_camera_top) + ' -c focus_absolute=' + str(camera_top_focus_absolute)
         process1 = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         cv2.waitKey(100)
-        command = 'v4l2-ctl -d /dev/video2 -c focus_auto=0'
+        command = 'v4l2-ctl -d /dev/video' + str(index_camera_side) + ' -c focus_auto=0'
         process2 = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         cv2.waitKey(100)
-        command = 'v4l2-ctl -d /dev/video2 -c focus_absolute=' + str(camera_side_focus_absolute)
+        command = 'v4l2-ctl -d /dev/video' + str(index_camera_side) + ' -c focus_absolute=' + str(camera_side_focus_absolute)
         process3 = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         cv2.waitKey(100)
         # command1 = 'v4l2-ctl -d /dev/video1 -c focus_auto=0 focus_absolute=' + str(camera_top_focus_absolute)
@@ -156,23 +161,23 @@ def main():
         # print(command2)
         # process1 = subprocess.Popen(command2.split(), stdout=subprocess.PIPE)
         # cv2.waitKey(100)
-        command3 = 'v4l2-ctl -d /dev/video1 -c focus_absolute=' + str(camera_top_focus_absolute)\
+        command3 = 'v4l2-ctl -d /dev/video' + str(index_camera_top) + ' -c focus_absolute=' + str(camera_top_focus_absolute)\
                   + ' contrast='+ str(camera_top_contrast) + ' brightness='+ str(camera_top_brightness)
         process2 = subprocess.Popen(command3.split(), stdout=subprocess.PIPE)
         cv2.waitKey(100)
-        command4 = 'v4l2-ctl -d /dev/video2 -c focus_absolute=' + str(camera_side_focus_absolute)\
+        command4 = 'v4l2-ctl -d /dev/video' + str(index_camera_side) + ' -c focus_absolute=' + str(camera_side_focus_absolute)\
                   + ' contrast=' + str(camera_side_contrast) + ' brightness='+ str(camera_side_brightness)
         process3 = subprocess.Popen(command4.split(), stdout=subprocess.PIPE)
         cv2.waitKey(100)
 
-        cap_top = cv2.VideoCapture(1)  # Top camera
-        cap_side = cv2.VideoCapture(2)  # Side camera
+        cap_top = cv2.VideoCapture(index_camera_top)  # Top camera
+        cap_side = cv2.VideoCapture(index_camera_side)  # Side camera
     else:
         # If live video isn't available, use recorded insertion video
         cap_top = cv2.VideoCapture(load_video_path[0] + '/output_top.avi')
         cap_side = cv2.VideoCapture(load_video_path[0] + '/output_side.avi')
 
-    cap_aux = cv2.VideoCapture(-1)
+    cap_aux = cv2.VideoCapture(index_camera_aux)
 
     # Load stereo calibration data
     # calibration = np.load('calibration_close.npz')

@@ -395,6 +395,10 @@ def main():
 
             SEND_MESSAGES = True
 
+            # Trigger external capture every frame
+            if arduino is not None:
+                arduino.write('1\n')
+
             if not np.array_equal(position_tip, position_tip_last):
                 delta = position_target - position_tip
                 rotation_tip = np.array([[0.99, 0, 0.1], [0.01, 0.99, 0], [0, 0.01, 0.99]])
@@ -431,8 +435,7 @@ def main():
                 # print('Delta tform: ' + str(transform_to_robot_coords(delta)))
                 #
                 # plotter.drawNow(position_tip)
-                if arduino is not None:
-                    arduino.write('1\n')
+
                 position_tip_time = np.concatenate(([[time.clock()]], position_tip))
                 # print(position_tip_time)
                 trajectory.append(position_tip_time)

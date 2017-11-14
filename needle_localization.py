@@ -188,6 +188,7 @@ def main():
         transform_camera_to_registration_marker = np.eye(4)
     else:
         transform_camera_to_registration_marker = np.load("./data/transform_registration_marker.npz")['transform_registration_marker']
+    print("Reg Marker Tform Loaded:", transform_camera_to_registration_marker)
 
     cal_left = Struct(**yaml.load(file('left.yaml','r')))
     cal_right = Struct(**yaml.load(file('right.yaml', 'r')))
@@ -422,17 +423,24 @@ def main():
             if arduino is not None:
                 arduino.write('1\n')
             print(position_target, position_target_corrected)
-            transform_camera_to_target_uncorrected = make_homogeneous_tform(translation=position_target)
+            # transform_camera_to_target_uncorrected = make_homogeneous_tform(translation=position_target)
             transform_camera_to_target = make_homogeneous_tform(translation=position_target_corrected)
-            print("Camera to Target Uncorrected")
-            print(transform_camera_to_target_uncorrected)
+            # print("Camera to Target Uncorrected")
+            # print(transform_camera_to_target_uncorrected)
+            print("Camera to Reg Marker")
+            print(transform_camera_to_registration_marker)
+
             print("Camera to Target Corrected")
             print(transform_camera_to_target)
 
-            transform_registration_marker_to_target = np.dot(np.linalg.inv(transform_camera_to_registration_marker),
-                                                             transform_camera_to_target)
-            transform_camera_to_registration_marker[0:3,0:3] = np.eye(3)
-            print("Marker to Target")
+            transform_registration_marker_to_camera = np.linalg.inv(transform_camera_to_registration_marker)
+            print("Reg Marker to Camera")
+            print(transform_registration_marker_to_camera
+                  )
+            transform_registration_marker_to_target = np.dot(transform_registration_marker_to_camera, transform_camera_to_target)
+            transform_registration_marker_to_target[0:3,0:3] = np.eye(3)
+
+            print("Reg Marker to Target")
             print(transform_registration_marker_to_target)
 
             if use_connection:

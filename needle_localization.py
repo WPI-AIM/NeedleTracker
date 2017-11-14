@@ -419,9 +419,6 @@ def main():
 
             # SEND_MESSAGES = True
 
-            # Trigger external capture every frame
-            if arduino is not None:
-                arduino.write('1\n')
             print(position_target, position_target_corrected)
             # transform_camera_to_target_uncorrected = make_homogeneous_tform(translation=position_target)
             transform_camera_to_target = make_homogeneous_tform(translation=position_target_corrected)
@@ -448,6 +445,8 @@ def main():
                 s.send(compose_OpenIGTLink_message(transform_registration_marker_to_target))
 
             if not np.array_equal(position_tip_corrected, position_tip_last):
+                if arduino is not None:
+                    arduino.write('1\n')
                 delta = position_target_corrected - position_tip_corrected
                 rotation_tip = np.array([[0.99, 0, 0.1], [0.01, 0.99, 0], [0, 0.01, 0.99]])
                 if len(transforms_tip) is not 0:

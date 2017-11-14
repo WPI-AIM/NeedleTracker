@@ -48,7 +48,8 @@ def main():
 
     arduino = None
     if use_arduino:
-        arduino = serial.Serial('/dev/ttyACM0', 19200, timeout=.5)
+        arduino = serial.Serial('/dev/ttyACM2', 19200, timeout=0.5)
+    time.sleep(2)
 
 
     if not use_recorded_video:

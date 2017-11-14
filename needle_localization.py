@@ -125,7 +125,7 @@ def main():
 
     arduino = None
     if use_arduino:
-        arduino = serial.Serial('/dev/ttyACM0', 19200, timeout=.5)
+        arduino = serial.Serial('/dev/ttyACM2', 19200, timeout=.5)
 
     bashCommand = 'mkdir -p ' + output_path
     process4 = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
@@ -444,7 +444,7 @@ def main():
                 # print("Sent!")
                 s.send(compose_OpenIGTLink_message(transform_registration_marker_to_target))
 
-            if not np.array_equal(position_tip_corrected, position_tip_last):
+            if not np.array_equal(position_tip_corrected, position_tip_last) and success_compensation_tip:
                 if arduino is not None:
                     arduino.write('1\n')
                 delta = position_target_corrected - position_tip_corrected
@@ -519,7 +519,7 @@ def main():
             cv2.putText(data_frame, 'Target: ' + make_data_string(position_target_corrected),
                         (10, 100), font, 1, text_color)
 
-            cv2.putText(data_frame, 'Tip: ' + make_data_string(position_tip_corrected),
+            cv2.putText(data_frame, 'Tip: ' + make_data_string(trajectory[-1][1:,:].reshape((3,1))),
                         (10, 150), font, 1, text_color)
 
             cv2.putText(data_frame, 'Top  2D: ' + str(tracker_top.position_tip[0]) + ' ' + str(tracker_top.position_tip[1]),

@@ -69,7 +69,6 @@ class RefractionModeler(object):
 
             # print("Refraction error", np.linalg.norm(self.real_point - self.point_observed))
             success = True
-
         return success, self.real_point
 
     def make_plot(self):

@@ -43,6 +43,8 @@ parser.add_argument('--use_arduino', action='store_true',
                     help='Trigger an Arduino over USB, to facilitate data logging with external tracking hardware.')
 parser.add_argument('--no_registration', action='store_true',
                     help='Calculate 3D coordinates in the frame of the stereo system.')
+parser.add_argument('--refraction_compensation', action='store_true',
+                    help='Correct for refractive effects caused by phantom medium.')
 args = parser.parse_args()
 globals().update(vars(args))
 
@@ -331,7 +333,7 @@ def main():
     camera_a_origin = np.array([0,0,0])
     camera_b_origin = trans_right
     compensator_tip = refraction.RefractionModeler(camera_a_origin, np.ravel(camera_b_origin), phantom_dims, phantom_transform, 1.2, 1.0)
-    # compensator_target = refraction.RefractionModeler(camera_a_origin, np.ravel(camera_b_origin), phantom_dims, phantom_transform, 1.2, 1.0)
+    compensator_target = refraction.RefractionModeler(camera_a_origin, np.ravel(camera_b_origin), phantom_dims, phantom_transform, 1.2, 1.0)
 
 
 
@@ -391,7 +393,11 @@ def main():
             position_tip = triangulator_tip.get_position_3D(tracker_top.position_tip, tracker_side.position_tip)
             position_target = triangulator_target.get_position_3D(target_top.target_coords, target_side.target_coords)
 
-            success_compensation, position_tip_corrected = compensator_tip.solve_real_point_from_refracted(np.ravel(position_tip))
+            success_compensation_tip, position_tip_corrected_list = compensator_tip.solve_real_point_from_refracted(np.ravel(position_tip))
+            success_compensation_target, position_target_corrected_list = compensator_target.solve_real_point_from_refracted(np.ravel(position_target))
+            # print(success_compensation_target, position_target_corrected)
+            position_tip_corrected = position_tip_corrected_list
+            position_target_corrected = np.array([position_target_corrected_list[0], position_target_corrected_list[1], position_target_corrected_list[2]]).reshape((3,1))
 
             time_delta = time.clock() - time_last
             time_last = time.clock()
@@ -415,8 +421,14 @@ def main():
             # Trigger external capture every frame
             if arduino is not None:
                 arduino.write('1\n')
+            print(position_target, position_target_corrected)
+            transform_camera_to_target_uncorrected = make_homogeneous_tform(translation=position_target)
+            transform_camera_to_target = make_homogeneous_tform(translation=position_target_corrected)
+            print("Camera to Target Uncorrected")
+            print(transform_camera_to_target_uncorrected)
+            print("Camera to Target Corrected")
+            print(transform_camera_to_target)
 
-            transform_camera_to_target = make_homogeneous_tform(translation=position_target)
             transform_registration_marker_to_target = np.dot(np.linalg.inv(transform_camera_to_registration_marker),
                                                              transform_camera_to_target)
             transform_camera_to_registration_marker[0:3,0:3] = np.eye(3)
@@ -427,18 +439,18 @@ def main():
                 # print("Sent!")
                 s.send(compose_OpenIGTLink_message(transform_registration_marker_to_target))
 
-            if not np.array_equal(position_tip, position_tip_last):
-                delta = position_target - position_tip
+            if not np.array_equal(position_tip_corrected, position_tip_last):
+                delta = position_target_corrected - position_tip_corrected
                 rotation_tip = np.array([[0.99, 0, 0.1], [0.01, 0.99, 0], [0, 0.01, 0.99]])
                 if len(transforms_tip) is not 0:
                     direction_motion = normalize(
-                        position_tip.reshape((3, 1)) - transforms_tip[-1][0:3, 3].reshape((3, 1)))
+                        position_tip_corrected.reshape((3, 1)) - transforms_tip[-1][0:3, 3].reshape((3, 1)))
                     axis_y = np.array([0, 1, 0]).reshape((1,3))
                     axis_z = normalize(np.cross(direction_motion.reshape((1,3)), axis_y).reshape((1,3)))
                     axis_y = normalize(np.cross(axis_z.reshape((1,3)), direction_motion.reshape((1,3))))
                     rotation_tip = np.concatenate((direction_motion.reshape((3, 1)), axis_y.reshape((3, 1)), axis_z.reshape((3, 1))), axis=1)
 
-                transform_camera_to_tip = make_homogeneous_tform(rotation=rotation_tip, translation=position_tip)
+                transform_camera_to_tip = make_homogeneous_tform(rotation=rotation_tip, translation=position_tip_corrected)
 
                 transforms_tip.append(transform_camera_to_tip)
 
@@ -463,7 +475,7 @@ def main():
                 #
                 # plotter.drawNow(position_tip)
 
-                position_tip_time = np.concatenate(([[time.clock()]], position_tip))
+                position_tip_time = np.concatenate(([[time.clock()]], position_tip_corrected.reshape((3,1))))
                 # print(position_tip_time)
                 trajectory.append(position_tip_time)
                 # print("Adding point to path")
@@ -497,10 +509,10 @@ def main():
             cv2.putText(data_frame, 'Delta: ' + make_data_string(delta),
                         (10, 50), font, 1, text_color)
 
-            cv2.putText(data_frame, 'Target: ' + make_data_string(position_target),
+            cv2.putText(data_frame, 'Target: ' + make_data_string(position_target_corrected),
                         (10, 100), font, 1, text_color)
 
-            cv2.putText(data_frame, 'Tip: ' + make_data_string(position_tip),
+            cv2.putText(data_frame, 'Tip: ' + make_data_string(position_tip_corrected),
                         (10, 150), font, 1, text_color)
 
             cv2.putText(data_frame, 'Top  2D: ' + str(tracker_top.position_tip[0]) + ' ' + str(tracker_top.position_tip[1]),
@@ -528,7 +540,7 @@ def main():
             out_flow.write(combined_flow)
 
             delta_last = delta
-            position_tip_last = position_tip
+            position_tip_last = position_tip_corrected
 
             time_delta = time.clock() - time_last
             time_last = time.clock()
@@ -679,7 +691,7 @@ def make_homogeneous_tform(rotation=np.eye(3), translation=np.zeros((3,1))):
     # TODO: Make this smarter for different types of inputs, or find a built-in in numpy or opencv
     homogeneous = np.eye(4)
     homogeneous[0:3, 0:3] = rotation
-    homogeneous[0:3, 3] = translation[:,0]
+    homogeneous[0:3, 3] = translation.reshape((3,1))[:,0]
     return homogeneous
 
 def compose_OpenIGTLink_message(input_tform):
@@ -734,7 +746,7 @@ def print_state(current_state):
         print('STATE_NO_DATA')
 
 def make_data_string(data):
-    return '%0.3g, %0.3g, %0.3g' % (data[0], data[1], data[2])
+    return '%0.3g, %0.3g, %0.3g' % (data.ravel()[0], data.ravel()[1], data.ravel()[2])
 
 if __name__ == '__main__':
     main()

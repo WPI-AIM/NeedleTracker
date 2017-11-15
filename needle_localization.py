@@ -196,6 +196,9 @@ def main():
     mat_left_obj = Struct(**cal_left.camera_matrix)
     mat_left = np.reshape(np.array(mat_left_obj.data),(mat_left_obj.rows,mat_left_obj.cols))
 
+    while 1:
+        pass
+
     mat_right_obj = Struct(**cal_right.camera_matrix)
     mat_right = np.reshape(np.array(mat_right_obj.data),(mat_right_obj.rows,mat_right_obj.cols))
 
@@ -206,7 +209,9 @@ def main():
     # print(np.reshape(np.array(p_right.data),(p_right.rows,p_right.cols)))
 
     # trans_right = np.array([[-0.0016343138898400025], [-0.13299820438398743], [0.1312384027069722]])
-    trans_right = np.array([[0.0003711532223565725], [-0.1319298883713302], [0.14078849901180754]])
+    # trans_right = np.array([[0.0003711532223565725], [-0.1319298883713302], [0.14078849901180754]])
+    trans_right = np.array([[0.0003711532223565725], [-0.113], [0.120]])
+
 
     # rot_right = np.array([0.9915492807737206, 0.03743949685116827, -0.12421073976371574, 0.121307736
     # 50921836, 0.07179373377171916, 0.9900151982945141, 0.04598322368134065, -0.9967165815148494, 0.06664532446634884]).reshape((3,3))
@@ -420,12 +425,15 @@ def main():
             # SEND_MESSAGES = True
 
             print(position_target, position_target_corrected)
-            # transform_camera_to_target_uncorrected = make_homogeneous_tform(translation=position_target)
+            transform_camera_to_target_uncorrected = make_homogeneous_tform(translation=position_target)
             transform_camera_to_target = make_homogeneous_tform(translation=position_target_corrected)
             # print("Camera to Target Uncorrected")
             # print(transform_camera_to_target_uncorrected)
             print("Camera to Reg Marker")
             print(transform_camera_to_registration_marker)
+
+            print("Camera to Target Uncorrected")
+            print(transform_camera_to_target_uncorrected)
 
             print("Camera to Target Corrected")
             print(transform_camera_to_target)

@@ -7,8 +7,8 @@
 	<!--<prefix>optitrack</prefix>-->
 	<calibration_file>calibration.npz</calibration_file>
 
-	<index_camera_top>2</index_camera_top>
-	<index_camera_side>1</index_camera_side>
+	<index_camera_top>1</index_camera_top>
+	<index_camera_side>2</index_camera_side>
 	<index_camera_aux>3</index_camera_aux>
 
 	<hue_motion>110</hue_motion>

@@ -350,9 +350,9 @@ def main():
                               camera_side_roi_center, camera_side_roi_size,
                               int(root.find("kernel_side").text), "camera_side", verbose=False)
 
-    phantom_dims = np.array([0.25, 0.0579, 0.0579]) # length is actually 0.12675 meters
+    phantom_dims = np.array([0.25, 0.058, 0.058]) # length is actually 0.12675 meters
     phantom_transform = np.eye(4)
-    phantom_transform[2,3]=0.12
+    phantom_transform[2,3]=0.1
     camera_a_origin = np.array([0,0,0])
     camera_b_origin = trans_right
     compensator_tip = refraction.RefractionModeler(camera_a_origin, np.ravel(camera_b_origin), phantom_dims, phantom_transform, 1.2, 1.0)

@@ -166,14 +166,14 @@ def main():
         # print(command2)
         # process1 = subprocess.Popen(command2.split(), stdout=subprocess.PIPE)
         # cv2.waitKey(100)
-        command3 = 'v4l2-ctl -d /dev/video' + str(index_camera_top) + ' -c focus_absolute=' + str(camera_top_focus_absolute)\
-                  + ' contrast='+ str(camera_top_contrast) + ' brightness='+ str(camera_top_brightness)
-        process2 = subprocess.Popen(command3.split(), stdout=subprocess.PIPE)
-        cv2.waitKey(100)
-        command4 = 'v4l2-ctl -d /dev/video' + str(index_camera_side) + ' -c focus_absolute=' + str(camera_side_focus_absolute)\
-                  + ' contrast=' + str(camera_side_contrast) + ' brightness='+ str(camera_side_brightness)
-        process3 = subprocess.Popen(command4.split(), stdout=subprocess.PIPE)
-        cv2.waitKey(100)
+        # command3 = 'v4l2-ctl -d /dev/video' + str(index_camera_top) + ' -c focus_absolute=' + str(camera_top_focus_absolute)\
+        #           + ' contrast='+ str(camera_top_contrast) + ' brightness='+ str(camera_top_brightness)
+        # process2 = subprocess.Popen(command3.split(), stdout=subprocess.PIPE)
+        # cv2.waitKey(100)
+        # command4 = 'v4l2-ctl -d /dev/video' + str(index_camera_side) + ' -c focus_absolute=' + str(camera_side_focus_absolute)\
+        #           + ' contrast=' + str(camera_side_contrast) + ' brightness='+ str(camera_side_brightness)
+        # process3 = subprocess.Popen(command4.split(), stdout=subprocess.PIPE)
+        # cv2.waitKey(100)
 
         cap_top = cv2.VideoCapture(index_camera_top)  # Top camera
         cap_side = cv2.VideoCapture(index_camera_side)  # Side camera
@@ -210,16 +210,35 @@ def main():
 
     # trans_right = np.array([[-0.0016343138898400025], [-0.13299820438398743], [0.1312384027069722]])
     # trans_right = np.array([[0.0003711532223565725], [-0.1319298883713302], [0.14078849901180754]])
-    trans_right = np.array([[0.0003711532223565725], [-0.113], [0.120]])
-
+    # trans_right = np.array([[0.0], [-0.130], [0.125]])
 
     # rot_right = np.array([0.9915492807737206, 0.03743949685116827, -0.12421073976371574, 0.121307736
     # 50921836, 0.07179373377171916, 0.9900151982945141, 0.04598322368134065, -0.9967165815148494, 0.06664532446634884]).reshape((3,3))
-    rot_right = np.array([0.9963031037938386, 0.020474484541114755, -0.08343213321939816, 0.08244848983771232, 0.044926951083412256, 0.9955821490915903, 0.024132382688918215, -0.9987804386095697, 0.04307277047777709]).reshape((3,3))
+    # rot_right = np.array([1.0, 0.0, 0.0,
+    #                       0.0, 0.0, 1.0,
+    #                       0.0, -1.0, 0.0]).reshape((3,3))
 
+
+    # p1 = np.concatenate((np.dot(mat_right, np.eye(3)), np.dot(mat_right, np.zeros((3,1)))), axis=1)
+    # p2 = np.concatenate((np.dot(mat_right, rot_right), np.dot(mat_right, trans_right)), axis=1)
+
+    translation_top_to_side = np.array([0.001977984910074812, 0.11807894739709818, 0.1304094431444622]).reshape((3,1))
+    rotation_top_to_side = np.array([0.9991609150516495, -0.018406245002353022, -0.03658792120446591,
+                                     -0.03783477948348375, -0.07270386689546655, -0.996635679272964,
+                                     0.015684237137553392, 0.9971837132060268, -0.07333925839585068]).reshape((3,3))
+
+    transform_top_to_side = make_homogeneous_tform(rotation=rotation_top_to_side, translation=translation_top_to_side)
+    transform_side_to_top = np.linalg.inv(transform_top_to_side)
+    print("side to top")
+    print(transform_side_to_top)
+    # print(transform_side_to_top[0:3,0:3])
+    # print(transform_side_to_top[0:3,3])
+
+    trans_right = transform_side_to_top[0:3,3]
+    rot_right = transform_side_to_top[0:3,0:3]
 
     p1 = np.concatenate((np.dot(mat_right, np.eye(3)), np.dot(mat_right, np.zeros((3,1)))), axis=1)
-    p2 = np.concatenate((np.dot(mat_right, rot_right), np.dot(mat_right, trans_right)), axis=1)
+    p2 = np.concatenate((np.dot(mat_right, transform_side_to_top[0:3,0:3]), np.dot(mat_right, transform_side_to_top[0:3,3].reshape((3,1)))), axis=1)
 
     # p1 = calibration['P1']
     # p2 = calibration['P2']
@@ -404,7 +423,8 @@ def main():
             success_compensation_target, position_target_corrected_list = compensator_target.solve_real_point_from_refracted(np.ravel(position_target))
             # print(success_compensation_target, position_target_corrected)
             position_tip_corrected = position_tip_corrected_list
-            position_target_corrected = np.array([position_target_corrected_list[0], position_target_corrected_list[1], position_target_corrected_list[2]]).reshape((3,1))
+            # position_target_corrected = np.array([position_target_corrected_list[0], position_target_corrected_list[1], position_target_corrected_list[2]]).reshape((3,1))
+            position_target_corrected = position_target
 
             time_delta = time.clock() - time_last
             time_last = time.clock()

@@ -48,8 +48,11 @@ parser.add_argument('--refraction_compensation', action='store_true',
 args = parser.parse_args()
 globals().update(vars(args))
 
-TARGET_TOP = (int(258), int(246))
-TARGET_SIDE = (int(261), int(230))
+TARGET_TOP_A = (int(258), int(246))
+TARGET_SIDE_A = (int(261), int(230))
+
+TARGET_TOP_B = (int(200), int(200))
+TARGET_SIDE_B = (int(200), int(200))
 
 ESTIMATE_TOP = (int(200), int(200))
 ESTIMATE_SIDE = (int(200), int(200))
@@ -195,9 +198,6 @@ def main():
 
     mat_left_obj = Struct(**cal_left.camera_matrix)
     mat_left = np.reshape(np.array(mat_left_obj.data),(mat_left_obj.rows,mat_left_obj.cols))
-
-    while 1:
-        pass
 
     mat_right_obj = Struct(**cal_right.camera_matrix)
     mat_right = np.reshape(np.array(mat_right_obj.data),(mat_right_obj.rows,mat_right_obj.cols))
@@ -345,9 +345,9 @@ def main():
 
     print("Target seg hue range: " + str(target_hue_min) + " to " + str(target_hue_max))
     target_top = tracking.TargetTracker(target_hue_min, target_hue_max, target_sat_min, target_sat_max,
-                                        target_val_min, target_val_max, None, TARGET_TOP)
+                                        target_val_min, target_val_max, None, TARGET_TOP_A)
     target_side = tracking.TargetTracker(target_hue_min, target_hue_max, target_sat_min, target_sat_max,
-                                         target_val_min, target_val_max, None, TARGET_SIDE)
+                                         target_val_min, target_val_max, None, TARGET_SIDE_A)
 
     triangulator_tip = tracking.Triangulator(p1, p2)
     triangulator_target = tracking.Triangulator(p1, p2)
@@ -385,19 +385,20 @@ def main():
                 cv2.imshow("Target top", target_top.image_masked)
                 cv2.imshow("Target side", target_side.image_masked)
             else:
-                target_top.target_coords = TARGET_TOP
-                target_side.target_coords = TARGET_SIDE
+                target_top.target_coords = TARGET_TOP_A
+                target_side.target_coords = TARGET_SIDE_A
 
             camera_top_with_marker = draw_tip_marker(camera_top_current_frame, tracker_top.roi_center,
                                                      tracker_top.roi_size, tracker_top.position_tip)
-            camera_top_with_marker = draw_target_marker(camera_top_with_marker, target_top.target_coords)
+            camera_top_with_marker = draw_target_markers(camera_top_with_marker, target_top.target_coords, TARGET_TOP_B)
 
             camera_side_with_marker = draw_tip_marker(camera_side_current_frame, tracker_side.roi_center,
                                                       tracker_side.roi_size, tracker_side.position_tip)
-            camera_side_with_marker = draw_target_marker(camera_side_with_marker, target_side.target_coords)
+            camera_side_with_marker = draw_target_markers(camera_side_with_marker, target_side.target_coords, TARGET_SIDE_B)
 
             position_tip = triangulator_tip.get_position_3D(tracker_top.position_tip, tracker_side.position_tip)
             position_target = triangulator_target.get_position_3D(target_top.target_coords, target_side.target_coords)
+            position_target_second = triangulator_target.get_position_3D(TARGET_TOP_B, TARGET_SIDE_B)
 
             success_compensation_tip, position_tip_corrected_list = compensator_tip.solve_real_point_from_refracted(np.ravel(position_tip))
             success_compensation_target, position_target_corrected_list = compensator_target.solve_real_point_from_refracted(np.ravel(position_target))
@@ -427,16 +428,20 @@ def main():
             print(position_target, position_target_corrected)
             transform_camera_to_target_uncorrected = make_homogeneous_tform(translation=position_target)
             transform_camera_to_target = make_homogeneous_tform(translation=position_target_corrected)
+            transform_camera_to_target_second_uncorrected = make_homogeneous_tform(translation=position_target_second)
             # print("Camera to Target Uncorrected")
             # print(transform_camera_to_target_uncorrected)
             print("Camera to Reg Marker")
             print(transform_camera_to_registration_marker)
 
-            print("Camera to Target Uncorrected")
+            print("Camera to First Target Uncorrected")
             print(transform_camera_to_target_uncorrected)
+            print("Camera to Second Target Uncorrected")
+            print(transform_camera_to_target_second_uncorrected)
+            print("Distance Between Targets: " + str(np.linalg.norm(transform_camera_to_target_uncorrected[:3,3] - transform_camera_to_target_second_uncorrected[:3,3])))
 
-            print("Camera to Target Corrected")
-            print(transform_camera_to_target)
+            # print("Camera to Target Corrected")
+            # print(transform_camera_to_target)
 
             transform_registration_marker_to_camera = np.linalg.inv(transform_camera_to_registration_marker)
             print("Reg Marker to Camera")
@@ -647,42 +652,46 @@ def draw_tip_path(image, path):
         cv2.circle(output, (int(point[0]), int(point[1])), 7, (80, 127, 255))
     return output
 
-def draw_target_marker(image, target_coords):
+def draw_target_markers(image, target_coords_a, target_coords_b):
     output = image.copy()
-    cv2.circle(output, target_coords, 10, (0, 255, 0))
+    cv2.circle(output, target_coords_a, 10, (0, 255, 0))
+    cv2.circle(output, target_coords_b, 10, (255, 0, 255))
     return output
 
 def get_coords_top(event, x, y, flags, param):
     global STATE
-    global TARGET_TOP
+    global TARGET_TOP_A
+    global TARGET_TOP_B
     if event == cv2.EVENT_LBUTTONDOWN:
         print("Click in top image")
-        TARGET_TOP = x, y
-        if STATE == STATE_NO_TARGET_POINTS:
-            STATE = change_state(STATE, STATE_ONE_TARGET_POINT_SET)
-        elif STATE == STATE_ONE_TARGET_POINT_SET:
-            STATE == change_state(STATE, STATE_SEND_DATA)
-        elif STATE == STATE_SEND_DATA:
-            STATE == change_state(STATE, STATE_ONE_TARGET_POINT_SET)
+        TARGET_TOP_A = x, y
+        # if STATE == STATE_NO_TARGET_POINTS:
+        #     STATE = change_state(STATE, STATE_ONE_TARGET_POINT_SET)
+        # elif STATE == STATE_ONE_TARGET_POINT_SET:
+        #     STATE == change_state(STATE, STATE_SEND_DATA)
+        # elif STATE == STATE_SEND_DATA:
+        #     STATE == change_state(STATE, STATE_ONE_TARGET_POINT_SET)
 
     elif event == cv2.EVENT_MBUTTONDOWN:
-        ESTIMATE_TOP = x, y
+        print("Right click in top image")
+        TARGET_TOP_B = x,y
 
 def get_coords_side(event, x, y, flags, param):
     global STATE
-    global TARGET_SIDE
+    global TARGET_SIDE_A
+    global TARGET_SIDE_B
     if event == cv2.EVENT_LBUTTONDOWN:
         print("Click in side image")
-        TARGET_SIDE = x, y
-        if STATE == STATE_NO_TARGET_POINTS:
-            STATE = change_state(STATE, STATE_ONE_TARGET_POINT_SET)
-        elif STATE == STATE_ONE_TARGET_POINT_SET:
-            STATE == change_state(STATE, STATE_SEND_DATA)
-        elif STATE == STATE_SEND_DATA:
-            STATE == change_state(STATE, STATE_ONE_TARGET_POINT_SET)
-
+        TARGET_SIDE_A = x, y
+        # if STATE == STATE_NO_TARGET_POINTS:
+        #     STATE = change_state(STATE, STATE_ONE_TARGET_POINT_SET)
+        # elif STATE == STATE_ONE_TARGET_POINT_SET:
+        #     STATE == change_state(STATE, STATE_SEND_DATA)
+        # elif STATE == STATE_SEND_DATA:
+        #     STATE == change_state(STATE, STATE_ONE_TARGET_POINT_SET)
     elif event == cv2.EVENT_MBUTTONDOWN:
-        ESTIMATE_SIDE = x, y
+        print("Right click in side image")
+        TARGET_SIDE_B = x,y
 
 def transform_to_robot_coords(input):
     return np.array([-input[2], input[1], -input[0]])

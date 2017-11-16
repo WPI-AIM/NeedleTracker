@@ -690,24 +690,6 @@ def draw_target_markers(image, target_coords_a, target_coords_b):
     cv2.circle(output, target_coords_b, 10, (255, 0, 255))
     return output
 
-# def get_coords_top(event, x, y, flags, param):
-#     # global STATE
-#     global TARGET_TOP_A
-#     global TARGET_TOP_B
-#     if event == cv2.EVENT_LBUTTONDOWN:
-#         print("Click in top image")
-#         TARGET_TOP_A = x, y
-#         # if STATE == STATE_NO_TARGET_POINTS:
-#         #     STATE = change_state(STATE, STATE_ONE_TARGET_POINT_SET)
-#         # elif STATE == STATE_ONE_TARGET_POINT_SET:
-#         #     STATE == change_state(STATE, STATE_SEND_DATA)
-#         # elif STATE == STATE_SEND_DATA:
-#         #     STATE == change_state(STATE, STATE_ONE_TARGET_POINT_SET)
-#
-#     elif event == cv2.EVENT_MBUTTONDOWN:
-#         print("Right click in top image")
-#         TARGET_TOP_B = x,y
-
 def get_coords(event, x, y, flags, param):
     global TARGET_TOP_A, TARGET_TOP_B, TARGET_SIDE_A, TARGET_SIDE_B, FRAME_SIZE
     if x < FRAME_SIZE[0]:
@@ -723,24 +705,6 @@ def get_coords(event, x, y, flags, param):
                 TARGET_SIDE_A = x, y-FRAME_SIZE[1]
             elif event == cv2.EVENT_MBUTTONDOWN:
                 TARGET_SIDE_B = x, y
-
-
-# def get_coords_side(event, x, y, flags, param):
-#     # global STATE
-#     global TARGET_SIDE_A
-#     global TARGET_SIDE_B
-#     if event == cv2.EVENT_LBUTTONDOWN:
-#         print("Click in side image")
-#         TARGET_SIDE_A = x, y
-#         # if STATE == STATE_NO_TARGET_POINTS:
-#         #     STATE = change_state(STATE, STATE_ONE_TARGET_POINT_SET)
-#         # elif STATE == STATE_ONE_TARGET_POINT_SET:
-#         #     STATE == change_state(STATE, STATE_SEND_DATA)
-#         # elif STATE == STATE_SEND_DATA:
-#         #     STATE == change_state(STATE, STATE_ONE_TARGET_POINT_SET)
-#     elif event == cv2.EVENT_MBUTTONDOWN:
-#         print("Right click in side image")
-#         TARGET_SIDE_B = x,y
 
 def transform_to_robot_coords(input):
     return np.array([-input[2], input[1], -input[0]])

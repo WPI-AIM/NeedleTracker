@@ -1,4 +1,6 @@
 '''
+needle_localization.py
+Main script to handle 3D needle tracking in a transparent phantom with highly-converging stereo cameras.
 Created on Feb 7, 2017
 
 @author: Joe Schornak
@@ -17,14 +19,8 @@ import yaml
 import refraction
 import tracking
 import serial
-
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib import cm
-from matplotlib.ticker import LinearLocator, FixedLocator, FormatStrFormatter
 import matplotlib
 
-from itertools import product, combinations
 matplotlib.interactive(True)
 
 # Parse command line arguments. These are options for things likely to change between runs.
@@ -51,11 +47,8 @@ globals().update(vars(args))
 TARGET_TOP_A = (int(258), int(246))
 TARGET_SIDE_A = (int(261), int(230))
 
-TARGET_TOP_B = (int(200), int(200))
-TARGET_SIDE_B = (int(200), int(200))
-
-ESTIMATE_TOP = (int(200), int(200))
-ESTIMATE_SIDE = (int(200), int(200))
+TARGET_TOP_B = (int(0), int(0))
+TARGET_SIDE_B = (int(0), int(0))
 
 SEND_MESSAGES = False
 
@@ -180,31 +173,6 @@ def main():
     mat_right_obj = Struct(**cal_right.camera_matrix)
     mat_right = np.reshape(np.array(mat_right_obj.data),(mat_right_obj.rows,mat_right_obj.cols))
 
-    # p_left = Struct(**Struct(**cal_left).projection_matrix)
-    # print(np.reshape(np.array(p_left.data),(p_left.rows,p_left.cols)))
-    #
-    # p_right = Struct(**Struct(**cal_right).projection_matrix)
-    # print(np.reshape(np.array(p_right.data),(p_right.rows,p_right.cols)))
-
-    # trans_right = np.array([[-0.0016343138898400025], [-0.13299820438398743], [0.1312384027069722]])
-    # trans_right = np.array([[0.0003711532223565725], [-0.1319298883713302], [0.14078849901180754]])
-    # trans_right = np.array([[0.0], [-0.130], [0.125]])
-
-    # rot_right = np.array([0.9915492807737206, 0.03743949685116827, -0.12421073976371574, 0.121307736
-    # 50921836, 0.07179373377171916, 0.9900151982945141, 0.04598322368134065, -0.9967165815148494, 0.06664532446634884]).reshape((3,3))
-    # rot_right = np.array([1.0, 0.0, 0.0,
-    #                       0.0, 0.0, 1.0,
-    #                       0.0, -1.0, 0.0]).reshape((3,3))
-
-
-    # p1 = np.concatenate((np.dot(mat_right, np.eye(3)), np.dot(mat_right, np.zeros((3,1)))), axis=1)
-    # p2 = np.concatenate((np.dot(mat_right, rot_right), np.dot(mat_right, trans_right)), axis=1)
-
-    # translation_top_to_side = np.array([0.001977984910074812, 0.11807894739709818, 0.1304094431444622]).reshape((3,1))
-    # rotation_top_to_side = np.array([0.9991609150516495, -0.018406245002353022, -0.03658792120446591,
-    #                                  -0.03783477948348375, -0.07270386689546655, -0.996635679272964,
-    #                                  0.015684237137553392, 0.9971837132060268, -0.07333925839585068]).reshape((3,3))
-
     translation_side_to_top = np.array([9.336674963296142e-05, 0.1268878884308696, 0.12432346740907979]).reshape((3,1))
 
     rotation_side_to_top = np.array( [0.997701828954437, -0.03188640457921707, -0.0597855977973143,
@@ -263,21 +231,21 @@ def main():
 
     out_top = cv2.VideoWriter(
         filename=output_path + '/output_top.avi',
-        fourcc=fourcc,  # '-1' Ask for an codec; '0' disables compressing.
+        fourcc=fourcc,
         fps=20.0,
         frameSize=(camera_top_width, camera_top_height),
         isColor=True)
 
     out_side = cv2.VideoWriter(
         filename=output_path + '/output_side.avi',
-        fourcc=fourcc,  # '-1' Ask for an codec; '0' disables compressing.
+        fourcc=fourcc,
         fps=20.0,
         frameSize=(camera_side_width, camera_side_height),
         isColor=True)
 
     out_flow = cv2.VideoWriter(
         filename=output_path + '/output_flow.avi',
-        fourcc=fourcc,  # '-1' Ask for an codec; '0' disables compressing.
+        fourcc=fourcc,
         fps=10.0,
         frameSize=(camera_top_roi_size[0] * 2, camera_top_roi_size[1] * 2),
         isColor=True)
@@ -426,8 +394,8 @@ def main():
             position_target = triangulator_target.get_position_3D(target_top.target_coords,
                                                                   target_side.target_coords)
 
-            position_target_second = triangulator_target.get_position_3D(TARGET_TOP_B,
-                                                                         TARGET_SIDE_B)
+            # position_target_second = triangulator_target.get_position_3D(TARGET_TOP_B,
+            #                                                              TARGET_SIDE_B)
 
             success_compensation_tip, position_tip_corrected_list = compensator_tip.solve_real_point_from_refracted(np.ravel(position_tip))
             success_compensation_target, position_target_corrected_list = compensator_target.solve_real_point_from_refracted(np.ravel(position_target))
@@ -442,36 +410,16 @@ def main():
             times.append(time_delta)
             print("Triangulation/Refraction: " + str(time_delta))
 
-            # position_tip_corrected = np.reshape(position_tip_corrected_temp,(3,1))
-            # success_compensation, position_target_corrected = np.reshape(compensator.solve_real_point_from_refracted(np.ravel(position_target)),(3,1))
-            # if success_compensation:
-            #     compensator_tip.make_plot()
-            #
-            # success_compensation, position_target_corrected = compensator_target.solve_real_point_from_refracted(np.ravel(position_target))
-            # if success_compensation:
-            #     compensator_target.make_plot()
-
-            # print("Position top raw", position_tip)
-            # print("Position tip corrected", position_tip_corrected)
-
-            # SEND_MESSAGES = True
-
             print(position_target, position_target_corrected)
             transform_camera_to_target_uncorrected = make_homogeneous_tform(translation=position_target)
             transform_camera_to_target = make_homogeneous_tform(translation=position_target_corrected)
-            # transform_camera_to_target_second_uncorrected = make_homogeneous_tform(translation=position_target_second)
 
             print("Camera to Reg Marker")
             print(transform_camera_to_registration_marker)
 
             print("Camera to First Target Uncorrected")
             print(transform_camera_to_target_uncorrected)
-            # print("Camera to Second Target Uncorrected")
-            # print(transform_camera_to_target_second_uncorrected)
-            # print("Distance Between Targets: " + str(np.linalg.norm(transform_camera_to_target_uncorrected[:3,3] - transform_camera_to_target_second_uncorrected[:3,3])))
 
-            # print("Camera to Target Corrected")
-            # print(transform_camera_to_target)
             print("Camera to First Target Corrected")
             print(transform_camera_to_target)
 
@@ -533,7 +481,6 @@ def main():
                                                    top_path)
             camera_side_with_marker = draw_tip_path(camera_side_with_marker,
                                                     side_path)
-
 
             time_delta = time.clock() - time_last
             time_last = time.clock()

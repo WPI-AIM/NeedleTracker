@@ -61,28 +61,11 @@ SEND_MESSAGES = False
 
 MAG_THRESHOLD = 10
 FRAME_THRESHOLD = 5
-#
-# STATE_NO_TARGET_POINTS = 0
-# STATE_ONE_TARGET_POINT_SET = 1
-# STATE_SEND_DATA = 2
-# STATE_NO_DATA = 3
 
-# STATE = STATE_NO_TARGET_POINTS
 
 def main():
-    global SEND_MESSAGES
-    global STATE
-    global load_video_path
-
-    global use_connection
-    global use_recorded_video
-    global load_video_path
-    global save_video
-    global use_target_segmentation
-    global use_arduino
-    global no_registration
-
-    global FRAME_SIZE
+    global SEND_MESSAGES, STATE, load_video_path, use_connection, use_recorded_video,\
+        load_video_path, save_video, use_target_segmentation, use_arduino, no_registration, FRAME_SIZE
 
     # Load xml config file. This is for values that possibly need to be changed but are likely to stay the same for many runs.
     tree = ET.parse('config.xml')
@@ -116,9 +99,6 @@ def main():
 
     dof_params_top = root.find("dof_top")
     dof_params_side = root.find("dof_side")
-
-    # camera_top_expected_heading = 45
-    # camera_side_expected_heading = 45
 
     output_path = output_dir + output_prefix + '_' + time.strftime("%Y_%m_%d_%H_%M_%S")
     print(output_path)
@@ -184,9 +164,6 @@ def main():
 
     cap_aux = cv2.VideoCapture(index_camera_aux)
 
-    # Load stereo calibration data
-    # calibration = np.load('calibration_close.npz')
-    # calibration = np.load('calibration.npz')
     if no_registration:
         transform_camera_to_registration_marker = np.eye(4)
     else:
@@ -242,35 +219,19 @@ def main():
     print("side to top")
     print(transform_side_to_top)
 
-    p1 = np.dot(mat_left, np.concatenate((np.eye(3), np.zeros((3,1))), axis=1))
-    p2 = np.dot(mat_right, transform_side_to_top[0:3,:])
-
-    # p1 = calibration['P1']
-    # p2 = calibration['P2']
-    # print(p1)
-    # print(p2)
-
-    # F = calibration['F']
-
-    # CameraMatrix1 = calibration['CameraMatrix1']
-    # DistCoeffs1 = calibration['DistCoeffs1']
-    #
-    # CameraMatrix2 = calibration['CameraMatrix2']
-    # DistCoeffs2 = calibration['DistCoeffs2']
+    p1_side = np.dot(mat_left, np.concatenate((np.eye(3), np.zeros((3,1))), axis=1))
+    p2_top = np.dot(mat_right, transform_side_to_top[0:3,:])
 
     top_frames = deque(maxlen=3)
     side_frames = deque(maxlen=3)
 
     transforms_tip = deque(maxlen=2)
 
-    ret, camera_top_last_frame = cap_top.read()
-    ret, camera_side_last_frame = cap_side.read()
+    _, camera_top_last_frame = cap_top.read()
+    _, camera_side_last_frame = cap_side.read()
 
     top_frames.append(camera_top_last_frame)
     side_frames.append(camera_side_last_frame)
-
-    # camera_top_last_frame = cv2.undistort(camera_top_last_frame, CameraMatrix1, DistCoeffs1)
-    # camera_side_last_frame = cv2.undistort(camera_side_last_frame, CameraMatrix2, DistCoeffs2)
 
     camera_top_height, camera_top_width, channels = camera_top_last_frame.shape
     camera_side_height, camera_side_width, channels = camera_side_last_frame.shape
@@ -279,14 +240,9 @@ def main():
 
     camera_top_roi_size = (200, 200)
     camera_side_roi_size = (200, 200)
-    # camera_top_roi_size = (camera_top_width, camera_top_height)
-    # camera_side_roi_size = camera_top_roi_size
 
     camera_top_roi_center = (int(camera_top_width * 0.8), camera_top_height / 2)
     camera_side_roi_center = (int(camera_side_width * 0.8), camera_side_height / 2)
-
-    # camera_top_roi_center = (camera_top_width/2, camera_top_height/2)
-    # camera_side_roi_center = camera_top_roi_center
 
     delta_last = None
     position_tip_last = None
@@ -326,16 +282,8 @@ def main():
         frameSize=(camera_top_roi_size[0] * 2, camera_top_roi_size[1] * 2),
         isColor=True)
 
-    # cv2.namedWindow("Camera Top")
-    # cv2.namedWindow("Camera Side")
-    #
-    # cv2.setMouseCallback("Camera Top", get_coords_top)
-    # cv2.setMouseCallback("Camera Side", get_coords_side)
-
     cv2.namedWindow("Combined")
     cv2.setMouseCallback("Combined", get_coords)
-
-    frames_since_update = 0
 
     camera_top_farneback_parameters = (float(dof_params_top.find("pyr_scale").text),
                                        int(dof_params_top.find("levels").text),
@@ -353,44 +301,81 @@ def main():
                                        float(dof_params_side.find("poly_sigma").text),
                                        0)
 
-    tracker_top = tracking.TipTracker(camera_top_farneback_parameters, camera_top_width, camera_top_height,
-                             hue_motion, hue_motion_range, int(root.find("threshold_mag").text),
-                             camera_top_roi_center, camera_top_roi_size,
-                             int(root.find("kernel_top").text), "camera_top", verbose=False)
-    tracker_side = tracking.TipTracker(camera_side_farneback_parameters, camera_side_width, camera_side_height,
-                                       hue_motion, hue_motion_range, int(root.find("threshold_mag").text),
-                              camera_side_roi_center, camera_side_roi_size,
-                              int(root.find("kernel_side").text), "camera_side", verbose=False)
+    tracker_top = tracking.TipTracker(camera_top_farneback_parameters,
+                                      camera_top_width,
+                                      camera_top_height,
+                                      hue_motion,
+                                      hue_motion_range,
+                                      int(root.find("threshold_mag").text),
+                                      camera_top_roi_center,
+                                      camera_top_roi_size,
+                                      int(root.find("kernel_top").text),
+                                      "camera_top",
+                                      verbose=False)
+    tracker_side = tracking.TipTracker(camera_side_farneback_parameters,
+                                       camera_side_width,
+                                       camera_side_height,
+                                       hue_motion,
+                                       hue_motion_range,
+                                       int(root.find("threshold_mag").text),
+                                       camera_side_roi_center,
+                                       camera_side_roi_size,
+                                       int(root.find("kernel_side").text),
+                                       "camera_side", verbose=False)
 
     phantom_dims = np.array([0.25, 0.0579, 0.0579]) # length is actually 0.12675 meters
     phantom_transform = np.eye(4)
     phantom_transform[2,3]=0.12
     camera_a_origin = np.array([0,0,0])
-    camera_b_origin = transform_side_to_top[0:3,3]
-    compensator_tip = refraction.RefractionModeler(camera_a_origin, np.ravel(camera_b_origin), phantom_dims, phantom_transform, 1.2, 1.0)
-    compensator_target = refraction.RefractionModeler(camera_a_origin, np.ravel(camera_b_origin), phantom_dims, phantom_transform, 1.2, 1.0)
+    camera_b_origin = transform_side_to_top[0:3,3].ravel()
 
+    compensator_tip = refraction.RefractionModeler(camera_a_origin,
+                                                   camera_b_origin,
+                                                   phantom_dims,
+                                                   phantom_transform,
+                                                   1.2,
+                                                   1.0)
 
+    compensator_target = refraction.RefractionModeler(camera_a_origin,
+                                                      camera_b_origin,
+                                                      phantom_dims,
+                                                      phantom_transform,
+                                                      1.2,
+                                                      1.0)
 
     print("Target seg hue range: " + str(target_hue_min) + " to " + str(target_hue_max))
-    target_top = tracking.TargetTracker(target_hue_min, target_hue_max, target_sat_min, target_sat_max,
-                                        target_val_min, target_val_max, None, TARGET_TOP_A)
-    target_side = tracking.TargetTracker(target_hue_min, target_hue_max, target_sat_min, target_sat_max,
-                                         target_val_min, target_val_max, None, TARGET_SIDE_A)
+    target_top = tracking.TargetTracker(target_hue_min,
+                                        target_hue_max,
+                                        target_sat_min,
+                                        target_sat_max,
+                                        target_val_min,
+                                        target_val_max,
+                                        None,
+                                        TARGET_TOP_A)
 
-    triangulator_tip = tracking.Triangulator(p1, p2)
-    triangulator_target = tracking.Triangulator(p1, p2)
+    target_side = tracking.TargetTracker(target_hue_min,
+                                         target_hue_max,
+                                         target_sat_min,
+                                         target_sat_max,
+                                         target_val_min,
+                                         target_val_max,
+                                         None,
+                                         TARGET_SIDE_A)
 
-    # plotter = plot3dClass(5,5)
+    triangulator_tip = tracking.Triangulator(p1_side,
+                                             p2_top)
+
+    triangulator_target = tracking.Triangulator(p1_side,
+                                                p2_top)
+
 
     time_last = time.clock()
-
 
     while cap_top.isOpened():
         try:
             times = []
-            ret, camera_top_current_frame = cap_top.read()
-            ret, camera_side_current_frame = cap_side.read()
+            _, camera_top_current_frame = cap_top.read()
+            _, camera_side_current_frame = cap_side.read()
             # ret, aux_frame = cap_aux.read()
             aux_frame = None
 
@@ -417,21 +402,35 @@ def main():
                 target_top.target_coords = TARGET_TOP_A
                 target_side.target_coords = TARGET_SIDE_A
 
-            camera_top_with_marker = draw_tip_marker(camera_top_current_frame, tracker_top.roi_center,
-                                                     tracker_top.roi_size, tracker_top.position_tip)
-            camera_top_with_marker = draw_target_markers(camera_top_with_marker, target_top.target_coords, TARGET_TOP_B)
+            camera_top_with_marker = draw_tip_marker(camera_top_current_frame,
+                                                     tracker_top.roi_center,
+                                                     tracker_top.roi_size,
+                                                     tracker_top.position_tip)
 
-            camera_side_with_marker = draw_tip_marker(camera_side_current_frame, tracker_side.roi_center,
-                                                      tracker_side.roi_size, tracker_side.position_tip)
-            camera_side_with_marker = draw_target_markers(camera_side_with_marker, target_side.target_coords, TARGET_SIDE_B)
+            camera_top_with_marker = draw_target_markers(camera_top_with_marker,
+                                                         target_top.target_coords,
+                                                         TARGET_TOP_B)
 
-            position_tip = triangulator_tip.get_position_3D(tracker_top.position_tip, tracker_side.position_tip)
-            position_target = triangulator_target.get_position_3D(target_top.target_coords, target_side.target_coords)
-            position_target_second = triangulator_target.get_position_3D(TARGET_TOP_B, TARGET_SIDE_B)
+            camera_side_with_marker = draw_tip_marker(camera_side_current_frame,
+                                                      tracker_side.roi_center,
+                                                      tracker_side.roi_size,
+                                                      tracker_side.position_tip)
+
+            camera_side_with_marker = draw_target_markers(camera_side_with_marker,
+                                                          target_side.target_coords,
+                                                          TARGET_SIDE_B)
+
+            position_tip = triangulator_tip.get_position_3D(tracker_top.position_tip,
+                                                            tracker_side.position_tip)
+
+            position_target = triangulator_target.get_position_3D(target_top.target_coords,
+                                                                  target_side.target_coords)
+
+            position_target_second = triangulator_target.get_position_3D(TARGET_TOP_B,
+                                                                         TARGET_SIDE_B)
 
             success_compensation_tip, position_tip_corrected_list = compensator_tip.solve_real_point_from_refracted(np.ravel(position_tip))
             success_compensation_target, position_target_corrected_list = compensator_target.solve_real_point_from_refracted(np.ravel(position_target))
-            # print(success_compensation_target, position_target_corrected)
             position_tip_corrected = position_tip_corrected_list
             # position_target_corrected = np.array([position_target_corrected_list[0], position_target_corrected_list[1], position_target_corrected_list[2]]).reshape((3,1))
             position_target_corrected = position_target
@@ -459,8 +458,7 @@ def main():
             transform_camera_to_target_uncorrected = make_homogeneous_tform(translation=position_target)
             transform_camera_to_target = make_homogeneous_tform(translation=position_target_corrected)
             # transform_camera_to_target_second_uncorrected = make_homogeneous_tform(translation=position_target_second)
-            # print("Camera to Target Uncorrected")
-            # print(transform_camera_to_target_uncorrected)
+
             print("Camera to Reg Marker")
             print(transform_camera_to_registration_marker)
 
@@ -486,21 +484,25 @@ def main():
             print(transform_registration_marker_to_target)
 
             if use_connection:
-                # print("Sent!")
                 s.send(compose_OpenIGTLink_message(transform_registration_marker_to_target))
 
             if not np.array_equal(position_tip_corrected, position_tip_last) and success_compensation_tip:
                 if arduino is not None:
                     arduino.write('1\n')
                 delta = position_target_corrected - position_tip_corrected
-                rotation_tip = np.array([[0.99, 0, 0.1], [0.01, 0.99, 0], [0, 0.01, 0.99]])
+                rotation_tip = np.array([[0.99, 0, 0.1],
+                                         [0.01, 0.99, 0],
+                                         [0, 0.01, 0.99]])
                 if len(transforms_tip) is not 0:
                     direction_motion = normalize(
                         position_tip_corrected.reshape((3, 1)) - transforms_tip[-1][0:3, 3].reshape((3, 1)))
                     axis_y = np.array([0, 1, 0]).reshape((1,3))
                     axis_z = normalize(np.cross(direction_motion.reshape((1,3)), axis_y).reshape((1,3)))
                     axis_y = normalize(np.cross(axis_z.reshape((1,3)), direction_motion.reshape((1,3))))
-                    rotation_tip = np.concatenate((direction_motion.reshape((3, 1)), axis_y.reshape((3, 1)), axis_z.reshape((3, 1))), axis=1)
+                    rotation_tip = np.concatenate((direction_motion.reshape((3, 1)),
+                                                   axis_y.reshape((3, 1)),
+                                                   axis_z.reshape((3, 1))),
+                                                  axis=1)
 
                 transform_camera_to_tip = make_homogeneous_tform(rotation=rotation_tip, translation=position_tip_corrected)
 
@@ -516,16 +518,7 @@ def main():
                 print(np.dot(np.linalg.inv(transform_registration_marker_to_tip),transform_registration_marker_to_target))
 
                 if use_connection:
-                    # print("Sent!")
                     s.send(compose_OpenIGTLink_message(transform_registration_marker_to_tip))
-                    # s.send(compose_OpenIGTLink_message(transform_registration_marker_to_target))
-                # print('Target: ' + str(target3D))
-                # print('Delta: ' + str(delta))
-                #
-                # print('Target tform: ' + str(transform_to_robot_coords(target3D)))
-                # print('Delta tform: ' + str(transform_to_robot_coords(delta)))
-                #
-                # plotter.drawNow(position_tip)
 
                 position_tip_time = np.concatenate(([[time.clock()]], position_tip_corrected.reshape((3,1))))
                 # print(position_tip_time)
@@ -534,25 +527,16 @@ def main():
                 top_path.append(tracker_top.position_tip)
                 side_path.append(tracker_side.position_tip)
 
-            camera_top_with_marker = draw_tip_path(camera_top_with_marker, top_path)
-            camera_side_with_marker = draw_tip_path(camera_side_with_marker, side_path)
+            camera_top_with_marker = draw_tip_path(camera_top_with_marker,
+                                                   top_path)
+            camera_side_with_marker = draw_tip_path(camera_side_with_marker,
+                                                    side_path)
 
-            # print("Pose tip", pose_tip)
-            # print("Pose target", pose_target)
 
             time_delta = time.clock() - time_last
             time_last = time.clock()
             times.append(time_delta)
             print("Comms: " + str(time_delta))
-
-            cv2.imshow('Camera Top', camera_top_current_frame)
-            cv2.imshow('Camera Side', camera_side_current_frame)
-
-            # cv2.imshow("Flow Mag Top", tracker_top.flow_mag)
-            # cv2.imshow("Flow Mag Side", tracker_side.flow_mag)
-            #
-            # cv2.imshow("Cam Top Thresh", tracker_top.image_current_gray_thresh)
-            # cv2.imshow("Cam Side Thresh", tracker_side.image_current_gray_thresh)
 
             font = cv2.FONT_HERSHEY_DUPLEX
             text_color = (0, 255, 0)
@@ -591,7 +575,7 @@ def main():
 
             combined_flow = np.array(np.concatenate((tracker_top.flow_diagnostic, tracker_side.flow_diagnostic), axis=1), dtype=np.uint8)
             cv2.imshow('Combined', combined)
-            cv2.imshow('Combined Flow', combined_flow)
+            # cv2.imshow('Combined Flow', combined_flow)
             out_combined.write(combined)
             out_flow.write(combined_flow)
 
@@ -633,44 +617,44 @@ class Struct:
     def __init__(self, **entries):
         self.__dict__.update(entries)
 
-class plot3dClass(object):
-    def __init__(self, systemSideLength, lowerCutoffLength ):
-        self.systemSideLength = systemSideLength
-        self.lowerCutoffLength = lowerCutoffLength
-
-        self.fig = plt.figure()
-        self.ax = self.fig.add_subplot(111, projection='3d')
-
-        # rng = np.arange(0, self.systemSideLength, self.lowerCutoffLength)
-        # self.X, self.Y = np.meshgrid(rng, rng)
-
-        self.ax.w_zaxis.set_major_locator(LinearLocator(10))
-        self.ax.w_zaxis.set_major_formatter(FormatStrFormatter('%.03f'))
-
-        # heightR = np.zeros(self.X.shape)
-        # self.surf = self.ax.plot_surface(
-        #     self.X, self.Y, heightR, rstride=1, cstride=1,
-        #     cmap=cm.jet, linewidth=0, antialiased=False)
-        # plt.draw() maybe you want to see this frame?
-
-    def drawNow(self, point):
-
-        # self.surf.remove()
-        # self.surf = self.ax.plot_surface(
-        #     self.X, self.Y, heightR, rstride=1, cstride=1,
-        #     cmap=cm.jet, linewidth=0, antialiased=False)
-
-        r = [-0.05, 0.05]
-        for s, e in combinations(np.array(list(product(r, r, r))), 2):
-            if np.sum(np.abs(s - e)) == r[1] - r[0]:
-                self.ax.plot3D(*zip(s, e), color="b")
-        # print(point)
-        self.ax.scatter(point[0], point[1], point[2], color="r")
-
-        plt.draw()  # redraw the canvas
-
-        self.fig.canvas.flush_events()
-        # time.sleep(1)
+# class plot3dClass(object):
+#     def __init__(self, systemSideLength, lowerCutoffLength ):
+#         self.systemSideLength = systemSideLength
+#         self.lowerCutoffLength = lowerCutoffLength
+#
+#         self.fig = plt.figure()
+#         self.ax = self.fig.add_subplot(111, projection='3d')
+#
+#         # rng = np.arange(0, self.systemSideLength, self.lowerCutoffLength)
+#         # self.X, self.Y = np.meshgrid(rng, rng)
+#
+#         self.ax.w_zaxis.set_major_locator(LinearLocator(10))
+#         self.ax.w_zaxis.set_major_formatter(FormatStrFormatter('%.03f'))
+#
+#         # heightR = np.zeros(self.X.shape)
+#         # self.surf = self.ax.plot_surface(
+#         #     self.X, self.Y, heightR, rstride=1, cstride=1,
+#         #     cmap=cm.jet, linewidth=0, antialiased=False)
+#         # plt.draw() maybe you want to see this frame?
+#
+#     def drawNow(self, point):
+#
+#         # self.surf.remove()
+#         # self.surf = self.ax.plot_surface(
+#         #     self.X, self.Y, heightR, rstride=1, cstride=1,
+#         #     cmap=cm.jet, linewidth=0, antialiased=False)
+#
+#         r = [-0.05, 0.05]
+#         for s, e in combinations(np.array(list(product(r, r, r))), 2):
+#             if np.sum(np.abs(s - e)) == r[1] - r[0]:
+#                 self.ax.plot3D(*zip(s, e), color="b")
+#         # print(point)
+#         self.ax.scatter(point[0], point[1], point[2], color="r")
+#
+#         plt.draw()  # redraw the canvas
+#
+#         self.fig.canvas.flush_events()
+#         # time.sleep(1)
 
 def draw_tip_marker(image, roi_center, roi_size, tip_position):
     line_length = 50
@@ -729,7 +713,6 @@ def is_within_bounds(input):
         return False
 
 def make_homogeneous_tform(rotation=np.eye(3), translation=np.zeros((3,1))):
-    # TODO: Make this smarter for different types of inputs, or find a built-in in numpy or opencv
     homogeneous = np.eye(4)
     homogeneous[0:3, 0:3] = rotation
     homogeneous[0:3, 3] = translation.reshape((3,1))[:,0]
@@ -737,7 +720,7 @@ def make_homogeneous_tform(rotation=np.eye(3), translation=np.zeros((3,1))):
 
 def compose_OpenIGTLink_message(input_tform):
     body = struct.pack('!12f',
-                       float(input_tform[0,0]), float(input_tform[1,0]), float(input_tform[2,0]),
+                       float(input_tform[0, 0]), float(input_tform[1, 0]), float(input_tform[2, 0]),
                        float(input_tform[0, 1]), float(input_tform[1, 1]), float(input_tform[2, 1]),
                        float(input_tform[0, 2]), float(input_tform[1, 2]), float(input_tform[2, 2]),
                        float(input_tform[0, 3]), float(input_tform[1, 3]), float(input_tform[2, 3]))
@@ -755,36 +738,6 @@ def drawlines(img1, line):
     x1, y1 = map(int, [c, -(line[2] + line[0] * c) / line[1]])
     img1 = cv2.line(img1, (x0, y0), (x1, y1), color, 1)
     return img1
-
-# def change_state(current_state, new_state):
-#     if current_state == STATE_NO_TARGET_POINTS:
-#         if new_state == STATE_ONE_TARGET_POINT_SET:
-#             return new_state
-#
-#     elif current_state == STATE_ONE_TARGET_POINT_SET:
-#         if new_state == STATE_SEND_DATA or new_state == STATE_NO_TARGET_POINTS:
-#             return new_state
-#
-#     elif current_state == STATE_SEND_DATA:
-#         if new_state == STATE_NO_DATA or new_state == STATE_ONE_TARGET_POINT_SET:
-#             return new_state
-#
-#     elif current_state == STATE_NO_DATA:
-#         if new_state == STATE_SEND_DATA or new_state == STATE_ONE_TARGET_POINT_SET:
-#             return new_state
-#
-#     else:
-#         return current_state
-#
-# def print_state(current_state):
-#     if current_state == STATE_NO_TARGET_POINTS:
-#         print('STATE_NO_TARGET_POINTS')
-#     elif current_state == STATE_ONE_TARGET_POINT_SET:
-#         print('STATE_ONE_TARGET_POINT_SET')
-#     elif current_state == STATE_SEND_DATA:
-#         print('STATE_SEND_DATA')
-#     elif current_state == STATE_NO_DATA:
-#         print('STATE_NO_DATA')
 
 def make_data_string(data):
     return '%0.3g, %0.3g, %0.3g' % (data.ravel()[0], data.ravel()[1], data.ravel()[2])

@@ -21,7 +21,7 @@ def main():
 
     ret, real_point = modeler.solve_real_point_from_refracted(point_observed)
     print("Observed Point", point_observed, "Real Point", real_point)
-    modeler.make_plot()
+    # modeler.make_plot()
 
 class RefractionModeler(object):
     def __init__(self, camera_a_origin, camera_b_origin, phantom_mesh_dims, phantom_transform, refractive_index_phantom, refractive_index_ambient):
@@ -30,8 +30,8 @@ class RefractionModeler(object):
         self.mesh_phantom = trimesh.primitives.Box(extents=phantom_mesh_dims, transform=phantom_transform)
         self.refractive_index_phantom = refractive_index_phantom
         self.refractive_index_ambient = refractive_index_ambient
-        self.fig = plt.figure()
-        self.ax = self.fig.add_subplot(111, projection='3d')
+        # self.fig = plt.figure()
+        # self.ax = self.fig.add_subplot(111, projection='3d')
 
     def solve_real_point_from_refracted(self, point_observed):
         # print("Origin A", self.camera_a_origin)
@@ -82,8 +82,8 @@ class RefractionModeler(object):
         plt.axis('equal')
         plt.xlabel("X")
         plt.ylabel("Y")
-        plt.draw()  # redraw the canvas
-        self.fig.canvas.flush_events()
+        # plt.draw()  # redraw the canvas
+        # self.fig.canvas.flush_events()
 
     def _get_closest_intersection(self, ray_origin, ray_direction):
         triangles, rays, locations = self.mesh_phantom.ray.intersects_id(np.reshape(ray_origin,(1,3)), np.reshape(ray_direction,(1,3)), return_locations=True)

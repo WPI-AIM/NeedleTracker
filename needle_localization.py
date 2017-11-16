@@ -82,6 +82,8 @@ def main():
     global use_arduino
     global no_registration
 
+    global FRAME_SIZE
+
     # Load xml config file. This is for values that possibly need to be changed but are likely to stay the same for many runs.
     tree = ET.parse('config.xml')
     root = tree.getroot()
@@ -273,6 +275,8 @@ def main():
     camera_top_height, camera_top_width, channels = camera_top_last_frame.shape
     camera_side_height, camera_side_width, channels = camera_side_last_frame.shape
 
+    FRAME_SIZE = (camera_top_width, camera_top_height)
+
     camera_top_roi_size = (200, 200)
     camera_side_roi_size = (200, 200)
     # camera_top_roi_size = (camera_top_width, camera_top_height)
@@ -322,11 +326,14 @@ def main():
         frameSize=(camera_top_roi_size[0] * 2, camera_top_roi_size[1] * 2),
         isColor=True)
 
-    cv2.namedWindow("Camera Top")
-    cv2.namedWindow("Camera Side")
+    # cv2.namedWindow("Camera Top")
+    # cv2.namedWindow("Camera Side")
+    #
+    # cv2.setMouseCallback("Camera Top", get_coords_top)
+    # cv2.setMouseCallback("Camera Side", get_coords_side)
 
-    cv2.setMouseCallback("Camera Top", get_coords_top)
-    cv2.setMouseCallback("Camera Side", get_coords_side)
+    cv2.namedWindow("Combined")
+    cv2.setMouseCallback("Combined", get_coords)
 
     frames_since_update = 0
 
@@ -359,7 +366,7 @@ def main():
     phantom_transform = np.eye(4)
     phantom_transform[2,3]=0.12
     camera_a_origin = np.array([0,0,0])
-    camera_b_origin = trans_right
+    camera_b_origin = transform_side_to_top[0:3,3]
     compensator_tip = refraction.RefractionModeler(camera_a_origin, np.ravel(camera_b_origin), phantom_dims, phantom_transform, 1.2, 1.0)
     compensator_target = refraction.RefractionModeler(camera_a_origin, np.ravel(camera_b_origin), phantom_dims, phantom_transform, 1.2, 1.0)
 
@@ -683,40 +690,57 @@ def draw_target_markers(image, target_coords_a, target_coords_b):
     cv2.circle(output, target_coords_b, 10, (255, 0, 255))
     return output
 
-def get_coords_top(event, x, y, flags, param):
-    # global STATE
-    global TARGET_TOP_A
-    global TARGET_TOP_B
-    if event == cv2.EVENT_LBUTTONDOWN:
-        print("Click in top image")
-        TARGET_TOP_A = x, y
-        # if STATE == STATE_NO_TARGET_POINTS:
-        #     STATE = change_state(STATE, STATE_ONE_TARGET_POINT_SET)
-        # elif STATE == STATE_ONE_TARGET_POINT_SET:
-        #     STATE == change_state(STATE, STATE_SEND_DATA)
-        # elif STATE == STATE_SEND_DATA:
-        #     STATE == change_state(STATE, STATE_ONE_TARGET_POINT_SET)
+# def get_coords_top(event, x, y, flags, param):
+#     # global STATE
+#     global TARGET_TOP_A
+#     global TARGET_TOP_B
+#     if event == cv2.EVENT_LBUTTONDOWN:
+#         print("Click in top image")
+#         TARGET_TOP_A = x, y
+#         # if STATE == STATE_NO_TARGET_POINTS:
+#         #     STATE = change_state(STATE, STATE_ONE_TARGET_POINT_SET)
+#         # elif STATE == STATE_ONE_TARGET_POINT_SET:
+#         #     STATE == change_state(STATE, STATE_SEND_DATA)
+#         # elif STATE == STATE_SEND_DATA:
+#         #     STATE == change_state(STATE, STATE_ONE_TARGET_POINT_SET)
+#
+#     elif event == cv2.EVENT_MBUTTONDOWN:
+#         print("Right click in top image")
+#         TARGET_TOP_B = x,y
 
-    elif event == cv2.EVENT_MBUTTONDOWN:
-        print("Right click in top image")
-        TARGET_TOP_B = x,y
+def get_coords(event, x, y, flags, param):
+    global TARGET_TOP_A, TARGET_TOP_B, TARGET_SIDE_A, TARGET_SIDE_B, FRAME_SIZE
+    if x < FRAME_SIZE[0]:
+        if y < FRAME_SIZE[1]:
+            # click in top image
+            if event == cv2.EVENT_LBUTTONDOWN:
+                TARGET_TOP_A = x, y
+            elif event == cv2.EVENT_MBUTTONDOWN:
+                TARGET_TOP_B = x, y
+        else:
+            # click in bottom image
+            if event == cv2.EVENT_LBUTTONDOWN:
+                TARGET_SIDE_A = x, y-FRAME_SIZE[1]
+            elif event == cv2.EVENT_MBUTTONDOWN:
+                TARGET_SIDE_B = x, y
 
-def get_coords_side(event, x, y, flags, param):
-    # global STATE
-    global TARGET_SIDE_A
-    global TARGET_SIDE_B
-    if event == cv2.EVENT_LBUTTONDOWN:
-        print("Click in side image")
-        TARGET_SIDE_A = x, y
-        # if STATE == STATE_NO_TARGET_POINTS:
-        #     STATE = change_state(STATE, STATE_ONE_TARGET_POINT_SET)
-        # elif STATE == STATE_ONE_TARGET_POINT_SET:
-        #     STATE == change_state(STATE, STATE_SEND_DATA)
-        # elif STATE == STATE_SEND_DATA:
-        #     STATE == change_state(STATE, STATE_ONE_TARGET_POINT_SET)
-    elif event == cv2.EVENT_MBUTTONDOWN:
-        print("Right click in side image")
-        TARGET_SIDE_B = x,y
+
+# def get_coords_side(event, x, y, flags, param):
+#     # global STATE
+#     global TARGET_SIDE_A
+#     global TARGET_SIDE_B
+#     if event == cv2.EVENT_LBUTTONDOWN:
+#         print("Click in side image")
+#         TARGET_SIDE_A = x, y
+#         # if STATE == STATE_NO_TARGET_POINTS:
+#         #     STATE = change_state(STATE, STATE_ONE_TARGET_POINT_SET)
+#         # elif STATE == STATE_ONE_TARGET_POINT_SET:
+#         #     STATE == change_state(STATE, STATE_SEND_DATA)
+#         # elif STATE == STATE_SEND_DATA:
+#         #     STATE == change_state(STATE, STATE_ONE_TARGET_POINT_SET)
+#     elif event == cv2.EVENT_MBUTTONDOWN:
+#         print("Right click in side image")
+#         TARGET_SIDE_B = x,y
 
 def transform_to_robot_coords(input):
     return np.array([-input[2], input[1], -input[0]])

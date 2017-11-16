@@ -432,8 +432,10 @@ def main():
             success_compensation_tip, position_tip_corrected_list = compensator_tip.solve_real_point_from_refracted(np.ravel(position_tip))
             success_compensation_target, position_target_corrected_list = compensator_target.solve_real_point_from_refracted(np.ravel(position_target))
             position_tip_corrected = position_tip_corrected_list
-            # position_target_corrected = np.array([position_target_corrected_list[0], position_target_corrected_list[1], position_target_corrected_list[2]]).reshape((3,1))
+
             position_target_corrected = position_target
+            if success_compensation_target:
+                position_target_corrected = np.array([position_target_corrected_list[0], position_target_corrected_list[1], position_target_corrected_list[2]]).reshape((3,1))
 
             time_delta = time.clock() - time_last
             time_last = time.clock()

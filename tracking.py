@@ -150,14 +150,18 @@ class Triangulator:
     def __init__(self, P1, P2):
         self.P1 = P1
         self.P2 = P2
+        print("P1")
+        print(self.P1)
+        print("P2")
+        print(self.P2)
 
     def _to_float(self, coords):
         return (float(coords[0]), float(coords[1]))
 
     def get_position_3D(self, coords_top, coords_side):
         pose_3D_homogeneous = cv2.triangulatePoints(self.P1, self.P2,
-                                                    np.array(self._to_float(coords_top)).reshape(2, -1),
-                                                    np.array(self._to_float(coords_side)).reshape(2, -1))
+                                                    np.array(self._to_float(coords_side)).reshape(2, -1),
+                                                    np.array(self._to_float(coords_top)).reshape(2, -1))
         return (pose_3D_homogeneous / pose_3D_homogeneous[3])[0:3]
 
 class TargetTracker:

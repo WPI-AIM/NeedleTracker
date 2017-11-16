@@ -61,13 +61,13 @@ SEND_MESSAGES = False
 
 MAG_THRESHOLD = 10
 FRAME_THRESHOLD = 5
+#
+# STATE_NO_TARGET_POINTS = 0
+# STATE_ONE_TARGET_POINT_SET = 1
+# STATE_SEND_DATA = 2
+# STATE_NO_DATA = 3
 
-STATE_NO_TARGET_POINTS = 0
-STATE_ONE_TARGET_POINT_SET = 1
-STATE_SEND_DATA = 2
-STATE_NO_DATA = 3
-
-STATE = STATE_NO_TARGET_POINTS
+# STATE = STATE_NO_TARGET_POINTS
 
 def main():
     global SEND_MESSAGES
@@ -79,7 +79,7 @@ def main():
     global load_video_path
     global save_video
     global use_target_segmentation
-    global use_aruino
+    global use_arduino
     global no_registration
 
     # Load xml config file. This is for values that possibly need to be changed but are likely to stay the same for many runs.
@@ -234,16 +234,14 @@ def main():
 
     transform_top_to_side = make_homogeneous_tform(rotation=rotation_top_to_side, translation=translation_top_to_side)
     transform_side_to_top = np.linalg.inv(transform_top_to_side)
+    print("top to side")
+    print(transform_top_to_side)
+
     print("side to top")
     print(transform_side_to_top)
-    # print(transform_side_to_top[0:3,0:3])
-    # print(transform_side_to_top[0:3,3])
 
-    trans_right = transform_side_to_top[0:3,3]
-    rot_right = transform_side_to_top[0:3,0:3]
-
-    p1 = np.concatenate((np.dot(mat_left, np.eye(3)), np.dot(mat_left, np.zeros((3,1)))), axis=1)
-    p2 = np.concatenate((np.dot(mat_right, rot_right), np.dot(mat_right, trans_right.reshape((3,1)))), axis=1)
+    p1 = np.dot(mat_left, np.concatenate((np.eye(3), np.zeros((3,1))), axis=1))
+    p2 = np.dot(mat_right, transform_side_to_top[0:3,:])
 
     # p1 = calibration['P1']
     # p2 = calibration['P2']
@@ -453,7 +451,7 @@ def main():
             print(position_target, position_target_corrected)
             transform_camera_to_target_uncorrected = make_homogeneous_tform(translation=position_target)
             transform_camera_to_target = make_homogeneous_tform(translation=position_target_corrected)
-            transform_camera_to_target_second_uncorrected = make_homogeneous_tform(translation=position_target_second)
+            # transform_camera_to_target_second_uncorrected = make_homogeneous_tform(translation=position_target_second)
             # print("Camera to Target Uncorrected")
             # print(transform_camera_to_target_uncorrected)
             print("Camera to Reg Marker")
@@ -686,7 +684,7 @@ def draw_target_markers(image, target_coords_a, target_coords_b):
     return output
 
 def get_coords_top(event, x, y, flags, param):
-    global STATE
+    # global STATE
     global TARGET_TOP_A
     global TARGET_TOP_B
     if event == cv2.EVENT_LBUTTONDOWN:
@@ -704,7 +702,7 @@ def get_coords_top(event, x, y, flags, param):
         TARGET_TOP_B = x,y
 
 def get_coords_side(event, x, y, flags, param):
-    global STATE
+    # global STATE
     global TARGET_SIDE_A
     global TARGET_SIDE_B
     if event == cv2.EVENT_LBUTTONDOWN:
@@ -766,35 +764,35 @@ def drawlines(img1, line):
     img1 = cv2.line(img1, (x0, y0), (x1, y1), color, 1)
     return img1
 
-def change_state(current_state, new_state):
-    if current_state == STATE_NO_TARGET_POINTS:
-        if new_state == STATE_ONE_TARGET_POINT_SET:
-            return new_state
-
-    elif current_state == STATE_ONE_TARGET_POINT_SET:
-        if new_state == STATE_SEND_DATA or new_state == STATE_NO_TARGET_POINTS:
-            return new_state
-
-    elif current_state == STATE_SEND_DATA:
-        if new_state == STATE_NO_DATA or new_state == STATE_ONE_TARGET_POINT_SET:
-            return new_state
-
-    elif current_state == STATE_NO_DATA:
-        if new_state == STATE_SEND_DATA or new_state == STATE_ONE_TARGET_POINT_SET:
-            return new_state
-
-    else:
-        return current_state
-
-def print_state(current_state):
-    if current_state == STATE_NO_TARGET_POINTS:
-        print('STATE_NO_TARGET_POINTS')
-    elif current_state == STATE_ONE_TARGET_POINT_SET:
-        print('STATE_ONE_TARGET_POINT_SET')
-    elif current_state == STATE_SEND_DATA:
-        print('STATE_SEND_DATA')
-    elif current_state == STATE_NO_DATA:
-        print('STATE_NO_DATA')
+# def change_state(current_state, new_state):
+#     if current_state == STATE_NO_TARGET_POINTS:
+#         if new_state == STATE_ONE_TARGET_POINT_SET:
+#             return new_state
+#
+#     elif current_state == STATE_ONE_TARGET_POINT_SET:
+#         if new_state == STATE_SEND_DATA or new_state == STATE_NO_TARGET_POINTS:
+#             return new_state
+#
+#     elif current_state == STATE_SEND_DATA:
+#         if new_state == STATE_NO_DATA or new_state == STATE_ONE_TARGET_POINT_SET:
+#             return new_state
+#
+#     elif current_state == STATE_NO_DATA:
+#         if new_state == STATE_SEND_DATA or new_state == STATE_ONE_TARGET_POINT_SET:
+#             return new_state
+#
+#     else:
+#         return current_state
+#
+# def print_state(current_state):
+#     if current_state == STATE_NO_TARGET_POINTS:
+#         print('STATE_NO_TARGET_POINTS')
+#     elif current_state == STATE_ONE_TARGET_POINT_SET:
+#         print('STATE_ONE_TARGET_POINT_SET')
+#     elif current_state == STATE_SEND_DATA:
+#         print('STATE_SEND_DATA')
+#     elif current_state == STATE_NO_DATA:
+#         print('STATE_NO_DATA')
 
 def make_data_string(data):
     return '%0.3g, %0.3g, %0.3g' % (data.ravel()[0], data.ravel()[1], data.ravel()[2])

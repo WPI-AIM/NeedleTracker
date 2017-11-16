@@ -189,7 +189,8 @@ def main():
         transform_camera_to_registration_marker = np.eye(4)
     else:
         transform_camera_to_registration_marker = np.load("./data/transform_registration_marker.npz")['transform_registration_marker']
-    print("Reg Marker Tform Loaded:", transform_camera_to_registration_marker)
+    print("Reg Marker Tform Loaded:")
+    print(transform_camera_to_registration_marker)
 
     cal_left = Struct(**yaml.load(file('left.yaml','r')))
     cal_right = Struct(**yaml.load(file('right.yaml', 'r')))
@@ -220,10 +221,16 @@ def main():
     # p1 = np.concatenate((np.dot(mat_right, np.eye(3)), np.dot(mat_right, np.zeros((3,1)))), axis=1)
     # p2 = np.concatenate((np.dot(mat_right, rot_right), np.dot(mat_right, trans_right)), axis=1)
 
-    translation_top_to_side = np.array([0.001977984910074812, 0.11807894739709818, 0.1304094431444622]).reshape((3,1))
-    rotation_top_to_side = np.array([0.9991609150516495, -0.018406245002353022, -0.03658792120446591,
-                                     -0.03783477948348375, -0.07270386689546655, -0.996635679272964,
-                                     0.015684237137553392, 0.9971837132060268, -0.07333925839585068]).reshape((3,3))
+    # translation_top_to_side = np.array([0.001977984910074812, 0.11807894739709818, 0.1304094431444622]).reshape((3,1))
+    # rotation_top_to_side = np.array([0.9991609150516495, -0.018406245002353022, -0.03658792120446591,
+    #                                  -0.03783477948348375, -0.07270386689546655, -0.996635679272964,
+    #                                  0.015684237137553392, 0.9971837132060268, -0.07333925839585068]).reshape((3,3))
+
+    translation_top_to_side = np.array([9.336674963296142e-05, 0.1268878884308696, 0.12432346740907979]).reshape((3,1))
+
+    rotation_top_to_side = np.array( [0.997701828954437, -0.03188640457921707, -0.0597855977973143,
+                                      -0.058907963785628806, 0.027788165175257316, -0.9978765803839791,
+                                      0.03348002842894244, 0.9991051371498414, 0.025845940052435786]).reshape((3,3))
 
     transform_top_to_side = make_homogeneous_tform(rotation=rotation_top_to_side, translation=translation_top_to_side)
     transform_side_to_top = np.linalg.inv(transform_top_to_side)
@@ -235,8 +242,8 @@ def main():
     trans_right = transform_side_to_top[0:3,3]
     rot_right = transform_side_to_top[0:3,0:3]
 
-    p1 = np.concatenate((np.dot(mat_right, np.eye(3)), np.dot(mat_right, np.zeros((3,1)))), axis=1)
-    p2 = np.concatenate((np.dot(mat_right, transform_side_to_top[0:3,0:3]), np.dot(mat_right, transform_side_to_top[0:3,3].reshape((3,1)))), axis=1)
+    p1 = np.concatenate((np.dot(mat_left, np.eye(3)), np.dot(mat_left, np.zeros((3,1)))), axis=1)
+    p2 = np.concatenate((np.dot(mat_right, rot_right), np.dot(mat_right, trans_right.reshape((3,1)))), axis=1)
 
     # p1 = calibration['P1']
     # p2 = calibration['P2']
@@ -454,17 +461,19 @@ def main():
 
             print("Camera to First Target Uncorrected")
             print(transform_camera_to_target_uncorrected)
-            print("Camera to Second Target Uncorrected")
-            print(transform_camera_to_target_second_uncorrected)
-            print("Distance Between Targets: " + str(np.linalg.norm(transform_camera_to_target_uncorrected[:3,3] - transform_camera_to_target_second_uncorrected[:3,3])))
+            # print("Camera to Second Target Uncorrected")
+            # print(transform_camera_to_target_second_uncorrected)
+            # print("Distance Between Targets: " + str(np.linalg.norm(transform_camera_to_target_uncorrected[:3,3] - transform_camera_to_target_second_uncorrected[:3,3])))
 
             # print("Camera to Target Corrected")
             # print(transform_camera_to_target)
+            print("Camera to First Target Corrected")
+            print(transform_camera_to_target)
 
             transform_registration_marker_to_camera = np.linalg.inv(transform_camera_to_registration_marker)
             print("Reg Marker to Camera")
-            print(transform_registration_marker_to_camera
-                  )
+            print(transform_registration_marker_to_camera)
+
             transform_registration_marker_to_target = np.dot(transform_registration_marker_to_camera, transform_camera_to_target)
             transform_registration_marker_to_target[0:3,0:3] = np.eye(3)
 

@@ -83,19 +83,19 @@ def main():
     cal_right = Struct(**yaml.load(file('right.yaml', 'r')))
 
     mat_left = yaml_to_mat(cal_left.camera_matrix)
-    mat_right= yaml_to_mat(cal_right.camera_matrix)
+    # mat_right= yaml_to_mat(cal_right.camera_matrix)
     dist_left = yaml_to_mat(cal_left.distortion_coefficients)
-    dist_right = yaml_to_mat(cal_right.distortion_coefficients)
+    # dist_right = yaml_to_mat(cal_right.distortion_coefficients)
 
     # trans_right = np.array([[-0.0016343138898400025], [-0.13299820438398743], [0.1312384027069722]])
     # trans_right = np.array([[0.0003711532223565725], [-0.1319298883713302], [0.14078849901180754]])
-    trans_right = np.array([[0.004782649869753433], [-0.1254748640257181], [0.12769832247248356]])
+    # trans_right = np.array([[0.004782649869753433], [-0.1254748640257181], [0.12769832247248356]])
     # rot_right = np.array([0.9915492807737206, 0.03743949685116827, -0.12421073976371574, 0.12130773650921836, 0.07179373377171916, 0.9900151982945141, 0.04598322368134065, -0.9967165815148494, 0.06664532446634884]).reshape((3,3))
     # rot_right = np.array([0.9963031037938386, 0.020474484541114755, -0.08343213321939816, 0.08244848983771232, 0.044926951083412256, 0.9955821490915903, 0.024132382688918215, -0.9987804386095697, 0.04307277047777709]).reshape((3,3))
-    rot_right = np.array([0.9992146126109057, -0.023280578360311485, 0.03206513084407465, -0.032033636939146785, 0.001724566682061061, 0.9994853035308775, -0.023323894385139918, -0.9997274831377643, 0.0009774506342097424]).reshape((3,3))
+    # rot_right = np.array([0.9992146126109057, -0.023280578360311485, 0.03206513084407465, -0.032033636939146785, 0.001724566682061061, 0.9994853035308775, -0.023323894385139918, -0.9997274831377643, 0.0009774506342097424]).reshape((3,3))
 
-    p1 = np.concatenate((np.dot(mat_left, np.eye(3)), np.dot(mat_left, np.zeros((3,1)))), axis=1)
-    p2 = np.concatenate((np.dot(mat_right, rot_right), np.dot(mat_right, trans_right)), axis=1)
+    # p1 = np.concatenate((np.dot(mat_left, np.eye(3)), np.dot(mat_left, np.zeros((3,1)))), axis=1)
+    # p2 = np.concatenate((np.dot(mat_right, rot_right), np.dot(mat_right, trans_right)), axis=1)
 
     # cv2.namedWindow("Camera Top")
     cv2.namedWindow("Camera Side")
@@ -128,7 +128,7 @@ def main():
     transform_deltas.append(np.eye(4))
 
     # dpi = 200.0
-    square_width = 0.00661
+    square_width = 0.007
     marker_width = square_width * 0.5
     squares_wide = 7
     squares_high = 9
@@ -209,8 +209,12 @@ def main():
     # if use_connection:
     #     s.send(make_OIGTL_homogeneous_tform(transforms[-1]))
 
+    transform_to_save =  transforms[-1]
+
     np.savez_compressed("./data/transforms_registration.npz", transforms=transforms, times=times)
-    np.savez_compressed("./data/transform_registration_marker.npz", transform_registration_marker = transforms[-1])
+    print("Saving transform:")
+    print(transform_to_save)
+    np.savez_compressed("./data/transform_registration_marker.npz", transform_registration_marker = transform_to_save)
 
     # cap_top.release()
     cap_side.release()

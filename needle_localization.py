@@ -205,14 +205,14 @@ def main():
     #                                  -0.03783477948348375, -0.07270386689546655, -0.996635679272964,
     #                                  0.015684237137553392, 0.9971837132060268, -0.07333925839585068]).reshape((3,3))
 
-    translation_top_to_side = np.array([9.336674963296142e-05, 0.1268878884308696, 0.12432346740907979]).reshape((3,1))
+    translation_side_to_top = np.array([9.336674963296142e-05, 0.1268878884308696, 0.12432346740907979]).reshape((3,1))
 
-    rotation_top_to_side = np.array( [0.997701828954437, -0.03188640457921707, -0.0597855977973143,
+    rotation_side_to_top = np.array( [0.997701828954437, -0.03188640457921707, -0.0597855977973143,
                                       -0.058907963785628806, 0.027788165175257316, -0.9978765803839791,
                                       0.03348002842894244, 0.9991051371498414, 0.025845940052435786]).reshape((3,3))
 
-    transform_top_to_side = make_homogeneous_tform(rotation=rotation_top_to_side, translation=translation_top_to_side)
-    transform_side_to_top = np.linalg.inv(transform_top_to_side)
+    transform_side_to_top = make_homogeneous_tform(rotation=rotation_side_to_top, translation=translation_side_to_top)
+    transform_top_to_side = np.linalg.inv(transform_side_to_top)
     print("top to side")
     print(transform_top_to_side)
 

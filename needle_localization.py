@@ -333,15 +333,15 @@ def main():
                                                    camera_b_origin,
                                                    phantom_dims,
                                                    phantom_transform,
-                                                   1.2,
-                                                   1.0)
+                                                   float(root.find("index_refraction_phantom").text),
+                                                   float(root.find("index_refraction_ambient").text))
 
     compensator_target = refraction.RefractionModeler(camera_a_origin,
                                                       camera_b_origin,
                                                       phantom_dims,
                                                       phantom_transform,
-                                                      1.2,
-                                                      1.0)
+                                                      float(root.find("index_refraction_phantom").text),
+                                                      float(root.find("index_refraction_ambient").text))
 
     print("Target seg hue range: " + str(target_hue_min) + " to " + str(target_hue_max))
     target_top = tracking.TargetTracker(target_hue_min,

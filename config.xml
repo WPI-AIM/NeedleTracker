@@ -50,4 +50,7 @@
 		<poly_n>5</poly_n>
 		<poly_sigma>1.2</poly_sigma>
 	</dof_side>
+
+	<index_refraction_phantom>1.5</index_refraction_phantom>
+	<index_refraction_ambient>1.0</index_refraction_ambient>
 </data>

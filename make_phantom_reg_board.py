@@ -12,15 +12,16 @@ width_marker = 0.0035
 markers_x = 2
 markers_y = 2
 
-ids = np.array([0])
+ids = np.array([1])
 
 # points_corners = np.array([[[0, 0, 0], [100, 0, 0],[100, 100, 0],[0, 100, 0]],
 #                            [[200, 0, 0], [300, 0, 0], [300, 100, 0], [200, 100, 0]]],dtype=np.float32)
 
-points_corners = np.array([[[0, 0, 0], [100, 0, 0],[100, 100, 0],[0, 100, 0]]],dtype=np.float32)
+points_corners = np.array([[[0, 0, 0], [50, 0, 0],[50, -50, 0],[0, -50, 0]]],dtype=np.float32)
 
+board = cv2.aruco.Board_create(objPoints=points_corners, dictionary=dictionary, ids=ids, )
+# board = cv2.aruco.GridBoard_create(2, 2, 50, 50, dictionary)
 
-board = cv2.aruco.Board_create(points_corners, dictionary, ids)
 
 img = cv2.aruco.drawPlanarBoard(board, (300,300))
 

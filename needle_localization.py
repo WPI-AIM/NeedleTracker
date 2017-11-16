@@ -558,6 +558,10 @@ def main():
             text_color = (0, 255, 0)
             data_frame = np.zeros_like(camera_top_with_marker)
 
+            cv2.putText(camera_top_with_marker, "Top", (5,20), font, 0.5, text_color)
+            cv2.putText(camera_side_with_marker, "Side", (5,20), font, 0.5, text_color)
+
+
             cv2.putText(data_frame, 'Delta: ' + make_data_string(delta),
                         (10, 50), font, 1, text_color)
 

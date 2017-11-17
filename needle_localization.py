@@ -435,7 +435,11 @@ def main():
 
             if use_connection:
                 s.send(compose_OpenIGTLink_message(transform_registration_marker_to_target))
-            transform_registration_marker_to_tip = np.eye(4)
+
+            transform_registration_marker_to_tip = np.array([[0, 0, 1, 0],
+                                                             [0, 0, 0, 0],
+                                                             [0, 0, 0, 0],
+                                                             [0, 0, 0, 0]])
 
             if not np.array_equal(position_tip_corrected, position_tip_last) and success_compensation_tip:
                 if arduino is not None:
@@ -461,14 +465,11 @@ def main():
 
                 transform_registration_marker_to_tip = np.dot(np.linalg.inv(transform_camera_to_registration_marker), transform_camera_to_tip)
 
-
                 print("Marker to Tip")
                 print(transform_registration_marker_to_tip)
 
-                print("Tip to Target")
-                print(np.dot(np.linalg.inv(transform_registration_marker_to_tip),transform_registration_marker_to_target))
-
-
+                # print("Tip to Target")
+                # print(np.dot(np.linalg.inv(transform_registration_marker_to_tip),transform_registration_marker_to_target))
 
                 position_tip_time = np.concatenate(([[time.clock()]], position_tip_corrected.reshape((3,1))))
                 # print(position_tip_time)

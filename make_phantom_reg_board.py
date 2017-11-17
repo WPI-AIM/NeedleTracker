@@ -31,14 +31,16 @@ top_right = [length_phantom_px - width_marker_px, 0, 0]
 bottom_left = [0, height_phantom_px - width_marker_px, 0]
 bottom_right = [length_phantom_px - width_marker_px, height_phantom_px - width_marker_px, 0]
 
+phantom_center_to_grid_origin = np.array([-length_phantom/2, -height_phantom/2, height_phantom/2])
+
 points_corners_list = []
 for coord_x in np.linspace(0, length_phantom - width_marker, markers_x_count, endpoint=True):
     print(coord_x)
-    points_corners_list.append(make_corner_points(np.array([coord_x, 0, 0]), width_marker))
-    points_corners_list.append(make_corner_points(np.array([coord_x, height_phantom - width_marker, 0]), width_marker))
+    points_corners_list.append(make_corner_points(phantom_center_to_grid_origin + np.array([coord_x, 0, 0]), width_marker))
+    points_corners_list.append(make_corner_points(phantom_center_to_grid_origin + np.array([coord_x, height_phantom - width_marker, 0]), width_marker))
 
 for coord_y in np.linspace(height_phantom*0.2, height_phantom*0.75, 4, endpoint=True):
-    points_corners_list.append(make_corner_points(np.array([0, coord_y, 0]), width_marker))
+    points_corners_list.append(make_corner_points(phantom_center_to_grid_origin + np.array([0, coord_y, 0]), width_marker))
 
 
 points_corners = np.concatenate(tuple(points_corners_list))

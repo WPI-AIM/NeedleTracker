@@ -62,8 +62,6 @@ def main():
         if cv2.waitKey(10) == ord('q') or frame_side is None:
             break
 
-
-
         markerCorners, markerIds, _ = cv2.aruco.detectMarkers(image=frame_side, dictionary=dictionary)
         # print(markerIds)
         if markerIds is not None:
@@ -83,79 +81,13 @@ def main():
 
     cv2.destroyAllWindows()
 
-# class Triangulator:
-#     def __init__(self, P1, P2):
-#         self.P1 = P1
-#         self.P2 = P2
-#
-#     def _to_float(self, coords):
-#         return (float(coords[0]), float(coords[1]))
-#
-#     def get_position_3D(self, coords_top, coords_side):
-#         pose_3D_homogeneous = cv2.triangulatePoints(self.P1, self.P2,
-#                                                     np.array(self._to_float(coords_top)).reshape(2, -1),
-#                                                     np.array(self._to_float(coords_side)).reshape(2, -1))
-#         return (pose_3D_homogeneous / pose_3D_homogeneous[3])[0:3]
-#
 class Struct:
     def __init__(self, **entries):
         self.__dict__.update(entries)
-#
-# def draw(img, corners, imgpts):
-#     corner = tuple(corners[0].ravel())
-#     img = cv2.line(img, corner, tuple(imgpts[0].ravel()), (255,0,0), 5)
-#     img = cv2.line(img, corner, tuple(imgpts[1].ravel()), (0,255,0), 5)
-#     img = cv2.line(img, corner, tuple(imgpts[2].ravel()), (0,0,255), 5)
-#     return img
-#
-# def find_phantom_markers(image):
-#     image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-#     segmented = cv2.inRange(image_hsv, np.array([0,0,0]), np.array([180, 255, 80]))
-#     cv2.imshow("Seg", segmented)
-#     img, contours, hierarchy = cv2.findContours(segmented, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-#     image_contours = image
-#     markers = []
-#     if len(contours) > 0:
-#         areas = []
-#         for i, c in enumerate(contours):
-#             area = cv2.contourArea(c)
-#             areas.append(area)
-#         contours_sorted = sorted(zip(areas, contours), key=lambda x: x[0], reverse=True)
-#
-#         cv2.drawContours(image_contours, contours, -1, (0, 255, 0), 3)
-#         cv2.imshow("Contours", image_contours)
-#         # print(contours_sorted)
-#
-#         for contour in contours:
-#             M = cv2.moments(contour)
-#             if M['m00'] > 0.0:
-#                 cx = int(M['m10'] / M['m00'])
-#                 cy = int(M['m01'] / M['m00'])
-#                 markers.append([[cx, cy]])
-#     return np.array(markers, dtype=np.float32)
-#
-#
+
 def yaml_to_mat(input):
     obj = Struct(**input)
     return np.reshape(np.array(obj.data),(obj.rows,obj.cols))
-#
-# def draw_target_marker(image, target_coords):
-#     output = image.copy()
-#     cv2.circle(output, target_coords, 10, (0, 255, 0))
-#     return output
-#
-# def transform_to_robot_coords(input):
-#     return np.array([-input[2], input[1], -input[0]])
-#
-# def make_OIGTL_homogeneous_tform(input_tform):
-#     body = struct.pack('!12f',
-#                        float(input_tform((0,0))), float(input_tform((1,0))), float(input_tform((2,0))),
-#                        float(input_tform((0, 1))), float(input_tform((1, 1))), float(input_tform((2, 1))),
-#                        float(input_tform((0, 2))), float(input_tform((1, 2))), float(input_tform((2, 2))),
-#                        float(input_tform((0, 3))), float(input_tform((1, 3))), float(input_tform((2, 3))))
-#     bodysize = 48
-#     return struct.pack('!H12s20sIIQQ', 1, str('TRANSFORM'), str('SIMULATOR'), int(time.time()), 0, bodysize, 0) + body
-
 
 if __name__ == '__main__':
     main()

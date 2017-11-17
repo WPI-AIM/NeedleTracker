@@ -85,7 +85,7 @@ def main():
 
     print("Saving...")
     print(transform_homogeneous)
-    np.savez_compressed("./data/transfer_camera_to_phantom.npz", transform_camera_to_phantom=transform_homogeneous)
+    np.savez_compressed("./data/transform_camera_to_phantom.npz", transform_camera_to_phantom=transform_homogeneous)
 
 class Struct:
     def __init__(self, **entries):

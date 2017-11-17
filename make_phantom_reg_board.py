@@ -8,7 +8,7 @@ dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
 
 
 length_phantom = 0.120
-height_phantom = 0.058 # more like 0.05785
+height_phantom = 0.05785 # more like 0.05785
 px_per_m = 200*(1/2.54)*100
 
 length_phantom_px = length_phantom*px_per_m

@@ -55,6 +55,8 @@ def main():
 
     time_start = time.clock()
 
+    transform_homogeneous = np.eye(4)
+
     while cap_side.isOpened():
         # ret, frame_top = cap_top.read()
         ret, frame_side = cap_side.read()
@@ -80,6 +82,10 @@ def main():
     cap_side.release()
 
     cv2.destroyAllWindows()
+
+    print("Saving...")
+    print(transform_homogeneous)
+    np.savez_compressed("./data/transfer_camera_to_phantom.npz", transform_camera_to_phantom=transform_homogeneous)
 
 class Struct:
     def __init__(self, **entries):

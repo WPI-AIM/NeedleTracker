@@ -291,9 +291,9 @@ def main():
                                        int(root.find("kernel_side").text),
                                        "camera_side", verbose=False)
 
-    phantom_dims = np.array([0.25, 0.058, 0.058]) # length is actually 0.12675 meters
-    phantom_transform = np.eye(4)
-    phantom_transform[2,3]=0.1
+    phantom_dims = np.array([0.12, 0.058, 0.058]) # length is actually 0.12675 meters
+    phantom_transform = np.load("./data/transform_camera_to_phantom.npz")['transform_camera_to_phantom']
+    # phantom_transform[2,3]=0.1
     camera_a_origin = np.array([0,0,0])
     camera_b_origin = transform_side_to_top[0:3,3].ravel()
 
@@ -404,6 +404,8 @@ def main():
             position_target_corrected = position_target
             if success_compensation_target:
                 position_target_corrected = np.array([position_target_corrected_list[0], position_target_corrected_list[1], position_target_corrected_list[2]]).reshape((3,1))
+            else:
+                print("TARGET REFRACTION COMPENSATION FAILED!")
 
             time_delta = time.clock() - time_last
             time_last = time.clock()
@@ -414,18 +416,18 @@ def main():
             transform_camera_to_target_uncorrected = make_homogeneous_tform(translation=position_target)
             transform_camera_to_target = make_homogeneous_tform(translation=position_target_corrected)
 
-            print("Camera to Reg Marker")
-            print(transform_camera_to_registration_marker)
+            # print("Camera to Reg Marker")
+            # print(transform_camera_to_registration_marker)
 
-            print("Camera to First Target Uncorrected")
-            print(transform_camera_to_target_uncorrected)
+            # print("Camera to First Target Uncorrected")
+            # print(transform_camera_to_target_uncorrected)
 
             print("Camera to First Target Corrected")
             print(transform_camera_to_target)
 
             transform_registration_marker_to_camera = np.linalg.inv(transform_camera_to_registration_marker)
-            print("Reg Marker to Camera")
-            print(transform_registration_marker_to_camera)
+            # print("Reg Marker to Camera")
+            # print(transform_registration_marker_to_camera)
 
             transform_registration_marker_to_target = np.dot(transform_registration_marker_to_camera, transform_camera_to_target)
             transform_registration_marker_to_target[0:3,0:3] = np.eye(3)
@@ -435,6 +437,13 @@ def main():
 
             if use_connection:
                 s.send(compose_OpenIGTLink_message(transform_registration_marker_to_target))
+
+            transform_registration_marker_to_tip = np.array([[0, 0, 1, 0],
+                                                             [0, 0, 0, 0],
+                                                             [0, 0, 0, 0],
+                                                             [0, 0, 0, 0]])
+            if not success_compensation_tip:
+                print("TIP REFRACTION COMPENSATION FAILED!")
 
             if not np.array_equal(position_tip_corrected, position_tip_last) and success_compensation_tip:
                 if arduino is not None:
@@ -460,15 +469,11 @@ def main():
 
                 transform_registration_marker_to_tip = np.dot(np.linalg.inv(transform_camera_to_registration_marker), transform_camera_to_tip)
 
-
                 print("Marker to Tip")
                 print(transform_registration_marker_to_tip)
 
-                print("Tip to Target")
-                print(np.dot(np.linalg.inv(transform_registration_marker_to_tip),transform_registration_marker_to_target))
-
-                if use_connection:
-                    s.send(compose_OpenIGTLink_message(transform_registration_marker_to_tip))
+                # print("Tip to Target")
+                # print(np.dot(np.linalg.inv(transform_registration_marker_to_tip),transform_registration_marker_to_target))
 
                 position_tip_time = np.concatenate(([[time.clock()]], position_tip_corrected.reshape((3,1))))
                 # print(position_tip_time)
@@ -476,6 +481,9 @@ def main():
                 # print("Adding point to path")
                 top_path.append(tracker_top.position_tip)
                 side_path.append(tracker_side.position_tip)
+
+            if use_connection:
+                s.send(compose_OpenIGTLink_message(transform_registration_marker_to_tip))
 
             camera_top_with_marker = draw_tip_path(camera_top_with_marker,
                                                    top_path)

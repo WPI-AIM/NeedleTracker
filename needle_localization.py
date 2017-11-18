@@ -105,8 +105,7 @@ def main():
     if use_arduino:
         arduino = serial.Serial('/dev/ttyACM2', 19200, timeout=.5)
 
-    bashCommand = 'mkdir -p ' + output_path
-    process4 = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+    process4 = subprocess.Popen(["mkdir", "-p", output_path], stdout=subprocess.PIPE)
     cv2.waitKey(100)
 
     if not use_recorded_video:
@@ -121,32 +120,17 @@ def main():
         #           + ' contrast=' + str(camera_side_contrast) + ' brightness='+ str(camera_side_brightness)\
         #           + ' v4l2-ctl -d /dev/video3 -c focus_auto=0 focus_absolute=60'
 
-        command = 'v4l2-ctl -d /dev/video' + str(index_camera_top) + ' -c focus_auto=0'
-        process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
-        cv2.waitKey(100)
-        # command = 'v4l2-ctl -d /dev/video' + str(index_camera_top) + ' -c focus_absolute=' + str(camera_top_focus_absolute)
-        # process1 = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
-        # cv2.waitKey(100)
-        command = 'v4l2-ctl -d /dev/video' + str(index_camera_side) + ' -c focus_auto=0'
-        process2 = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
-        cv2.waitKey(100)
-        # command = 'v4l2-ctl -d /dev/video' + str(index_camera_side) + ' -c focus_absolute=' + str(camera_side_focus_absolute)
-        # process3 = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
-        # cv2.waitKey(100)
-        command1 = 'v4l2-ctl -d /dev/video1 -c focus_absolute=' + str(camera_top_focus_absolute)
-        # print(command1)
-        process1 = subprocess.Popen(command1.split(), stdout=subprocess.PIPE)
-        # cv2.waitKey(100)
-        command2 = 'v4l2-ctl -d /dev/video2 -c focus_absolute=' + str(camera_side_focus_absolute)
-        # print(command2)
-        process1 = subprocess.Popen(command2.split(), stdout=subprocess.PIPE)
-        cv2.waitKey(100)
-        command3 = 'v4l2-ctl -d /dev/video' + str(index_camera_top) + ' -c contrast='+ str(camera_top_contrast) + ' brightness='+ str(camera_top_brightness)
-        process2 = subprocess.Popen(command3.split(), stdout=subprocess.PIPE)
-        cv2.waitKey(100)
-        command4 = 'v4l2-ctl -d /dev/video' + str(index_camera_side) + ' -c contrast=' + str(camera_side_contrast) + ' brightness='+ str(camera_side_brightness)
-        process3 = subprocess.Popen(command4.split(), stdout=subprocess.PIPE)
-        cv2.waitKey(100)
+        process = subprocess.Popen(["v4l2-ctl", "-d", "/dev/video" + str(index_camera_top), "-c", "focus_auto=0"], stdout=subprocess.PIPE)
+
+        process1 = subprocess.Popen(["v4l2-ctl", "-d", "/dev/video" + str(index_camera_side), "-c", "focus_auto=0"], stdout=subprocess.PIPE)
+
+        process2 = subprocess.Popen(["v4l2-ctl", "-d", "/dev/video" + str(index_camera_top), "-c", "focus_absolute=" + str(camera_top_focus_absolute)], stdout=subprocess.PIPE)
+
+        process3 = subprocess.Popen(["v4l2-ctl", "-d", "/dev/video" + str(index_camera_side), "-c", "focus_absolute=" + str(camera_top_focus_absolute)], stdout=subprocess.PIPE)
+
+        process4 = subprocess.Popen(["v4l2-ctl", "-d /dev/video" + str(index_camera_top), "-c", "contrast="+ str(camera_top_contrast), "brightness="+ str(camera_top_brightness)], stdout=subprocess.PIPE)
+
+        process5 = subprocess.Popen(["v4l2-ctl", "-d /dev/video" + str(index_camera_side), "-c", "contrast="+ str(camera_side_contrast), "brightness="+ str(camera_side_brightness)], stdout=subprocess.PIPE)
 
         cap_top = cv2.VideoCapture(index_camera_top)  # Top camera
         cap_side = cv2.VideoCapture(index_camera_side)  # Side camera

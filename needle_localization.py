@@ -482,8 +482,9 @@ def main():
                 trajectory_corrected.append(position_tip_time)
                 trajectory_uncorrected.append(position_tip_uncorrected_time)
                 # print("Adding point to path")
-                top_path.append(tracker_top.position_tip)
-                side_path.append(tracker_side.position_tip)
+
+            top_path.append(tracker_top.position_tip)
+            side_path.append(tracker_side.position_tip)
 
             if use_connection:
                 s.send(compose_OpenIGTLink_message(transform_registration_marker_to_tip))

@@ -3,7 +3,7 @@
 	<ip>192.168.0.100</ip>
 	<port>18944</port>
 	<output_dir>./data/</output_dir>
-	<prefix>alignment_test</prefix>
+	<prefix>verification_2d</prefix>
 	<!--<prefix>optitrack</prefix>-->
 	<calibration_file>calibration.npz</calibration_file>
 

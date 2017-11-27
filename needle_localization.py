@@ -199,7 +199,8 @@ def main():
     delta_last = None
     position_tip_last = None
 
-    trajectory = []
+    trajectory_corrected = []
+    trajectory_uncorrected = []
 
     top_path = []
     side_path = []
@@ -460,11 +461,14 @@ def main():
                 # print(np.dot(np.linalg.inv(transform_registration_marker_to_tip),transform_registration_marker_to_target))
 
                 position_tip_time = np.concatenate(([[time.clock()]], position_tip_corrected.reshape((3,1))))
+                position_tip_uncorrected_time = np.concatenate(([[time.clock()]], position_tip.reshape((3, 1))))
                 # print(position_tip_time)
-                trajectory.append(position_tip_time)
+                trajectory_corrected.append(position_tip_time)
+                trajectory_uncorrected.append(position_tip_uncorrected_time)
                 # print("Adding point to path")
-                top_path.append(tracker_top.position_tip)
-                side_path.append(tracker_side.position_tip)
+
+            top_path.append(tracker_top.position_tip)
+            side_path.append(tracker_side.position_tip)
 
             if use_connection:
                 s.send(compose_OpenIGTLink_message(transform_registration_marker_to_tip))
@@ -493,7 +497,7 @@ def main():
             cv2.putText(data_frame, 'Target: ' + make_data_string(position_target_corrected),
                         (10, 100), font, 1, text_color)
 
-            cv2.putText(data_frame, 'Tip: ' + make_data_string(trajectory[-1][1:,:].reshape((3,1))),
+            cv2.putText(data_frame, 'Tip: ' + make_data_string(trajectory_corrected[-1][1:,:].reshape((3,1))),
                         (10, 150), font, 1, text_color)
 
             cv2.putText(data_frame, 'Top  2D: ' + str(tracker_top.position_tip[0]) + ' ' + str(tracker_top.position_tip[1]),
@@ -546,10 +550,13 @@ def main():
 
     cv2.destroyAllWindows()
 
-    trajectoryArray = np.array(trajectory)
+    trajectory_array_corrected = np.array(trajectory_corrected)
+    trajectory_array_uncorrected = np.array(trajectory_uncorrected)
     # print(trajectoryArray)
-    np.savetxt(output_path + "/trajectory.csv", trajectoryArray, delimiter=",")
-    np.savez_compressed(output_path + "/trajectory.npz", trajectory=trajectoryArray,
+    np.savetxt(output_path + "/trajectory.csv", trajectory_array_corrected, delimiter=",")
+    np.savetxt(output_path + "/trajectory_uncorrected.csv", trajectory_array_uncorrected, delimiter=",")
+    np.savetxt(output_path + "/trajectory2d.csv", np.concatenate((top_path, side_path), axis=1), delimiter=",")
+    np.savez_compressed(output_path + "/trajectory.npz", trajectory=trajectory_array_corrected,
                         top_path=np.array(top_path), side_path=np.array(side_path))
 
 

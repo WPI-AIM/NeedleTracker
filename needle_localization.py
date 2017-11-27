@@ -570,6 +570,7 @@ def main():
     # print(trajectoryArray)
     np.savetxt(output_path + "/trajectory.csv", trajectory_array_corrected, delimiter=",")
     np.savetxt(output_path + "/trajectory_uncorrected.csv", trajectory_array_uncorrected, delimiter=",")
+    np.savetxt(output_path + "/trajectory2d.csv", np.concatenate((top_path, side_path), axis=1), delimiter=",")
     np.savez_compressed(output_path + "/trajectory.npz", trajectory=trajectory_array_corrected,
                         top_path=np.array(top_path), side_path=np.array(side_path))
 

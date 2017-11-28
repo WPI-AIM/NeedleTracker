@@ -37,12 +37,12 @@ TARGET_SIDE_A = (int(261), int(230))
 def main():
     global load_video_path, FRAME_SIZE, TARGET_TOP_A, TARGET_SIDE_A
 
-    output_path = './ground_truth_' + time.strftime("%Y_%m_%d_%H_%M_%S")
-    # print(output_path)
+    output_path = '/home/jgschornak/NeedleLocalization/data/ground_truth_' + time.strftime("%Y_%m_%d_%H_%M_%S")
+    print(output_path)
 
     process4 = subprocess.Popen(["mkdir", "-p", output_path], stdout=subprocess.PIPE)
     cv2.waitKey(100)
-    process4.kill()
+    # process4.kill()
 
     print(load_video_path)
     # If live video isn't available, use recorded insertion video
@@ -109,10 +109,10 @@ def main():
 
     cv2.destroyAllWindows()
 
-    print(top_path)
-    print(side_path)
+    paths = np.concatenate((top_path, side_path), axis=1)
+    print(paths)
 
-    np.savetxt("trajectory2d_canonical.csv", np.concatenate((top_path, side_path), axis=1), delimiter=",")
+    np.savetxt(output_path + '/trajectory2d_canonical.csv', paths, delimiter=",")
     cv2.waitKey(500)
 
 class Struct:

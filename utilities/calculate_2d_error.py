@@ -68,17 +68,13 @@ print(errors_total_norm_mean, errors_total_norm_stdev)
 
 plt.figure(3)
 plt.plot(np.linspace(0, 100, len(trial1_result[4][:, 0])), trial1_result[4][:, 0], 'r',
-         np.linspace(0, 100, len(trial2_result[4][:, 0])), trial2_result[4][:, 0], 'g',
-         np.linspace(0, 100, len(trial3_result[4][:, 0])), trial3_result[4][:, 0], 'b',
-         # np.linspace(0, 100, len(trial4_result[4][:, 0])), trial4_result[4][:, 0], 'k',
-         # np.linspace(0, 100, len(trial5_result[4][:, 0])), trial5_result[4][:, 0], 'm',
          np.linspace(0, 100, len(trial1_result[4][:, 1])), trial1_result[4][:, 1], 'r--',
+         np.linspace(0, 100, len(trial2_result[4][:, 0])), trial2_result[4][:, 0], 'g',
          np.linspace(0, 100, len(trial2_result[4][:, 1])), trial2_result[4][:, 1], 'g--',
+         np.linspace(0, 100, len(trial3_result[4][:, 0])), trial3_result[4][:, 0], 'b',
          np.linspace(0, 100, len(trial3_result[4][:, 1])), trial3_result[4][:, 1], 'b--',
-         # np.linspace(0, 100, len(trial4_result[4][:, 1])), trial4_result[4][:, 1], 'k--',
-         # np.linspace(0, 100, len(trial5_result[4][:, 1])), trial5_result[4][:, 1], 'm--'
          )
-plt.legend(['Trial 1 X', 'Trial 2 X', 'Trial 3 X', 'Trial 1 Y', 'Trial 2 Y', 'Trial 3 Y'])
+plt.legend(['Trial 1 X', 'Trial 1 Y', 'Trial 2 X', 'Trial 2 Y', 'Trial 3 X', 'Trial 3 Y'])
 plt.xlabel('Percent Maximum Depth')
 plt.ylabel('Error (px)')
 

@@ -46,8 +46,8 @@ def main():
 
     print(load_video_path)
     # If live video isn't available, use recorded insertion video
-    cap_top = cv2.VideoCapture('/home/jgschornak/NeedleLocalization/data/pvc_2017_10_04_12_15_35/output_top.avi')
-    cap_side = cv2.VideoCapture('/home/jgschornak/NeedleLocalization/data/pvc_2017_10_04_12_15_35/output_side.avi')
+    cap_top = cv2.VideoCapture('/home/jgschornak/NeedleLocalization/data/validation_2d_2017_11_28_12_00_46/output_top.avi')
+    cap_side = cv2.VideoCapture('/home/jgschornak/NeedleLocalization/data/validation_2d_2017_11_28_12_00_46/output_side.avi')
 
     cv2.waitKey(500)
 

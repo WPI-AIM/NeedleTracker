@@ -3,7 +3,7 @@
 	<ip>192.168.0.100</ip>
 	<port>18944</port>
 	<output_dir>./data/</output_dir>
-	<prefix>validation_2d</prefix>
+	<prefix>debug</prefix>
 	<!--<prefix>optitrack</prefix>-->
 	<calibration_file>calibration.npz</calibration_file>
 
@@ -25,7 +25,7 @@
 	<camera_top_contrast>200</camera_top_contrast>
 	<camera_top_brightness>180</camera_top_brightness>
 
-	<camera_side_focus_absolute>50</camera_side_focus_absolute>
+	<camera_side_focus_absolute>60</camera_side_focus_absolute>
 	<camera_side_contrast>200</camera_side_contrast>
 	<camera_side_brightness>180</camera_side_brightness>
 

@@ -48,7 +48,7 @@ def main():
 
     arduino = None
     if use_arduino:
-        arduino = serial.Serial('/dev/ttyACM2', 19200, timeout=0.5)
+        arduino = serial.Serial('/dev/ttyACM0', 19200, timeout=0.5)
     time.sleep(2)
 
 
@@ -128,11 +128,13 @@ def main():
     transform_deltas.append(np.eye(4))
 
     # dpi = 200.0
+    # FOR ROBOT REG MARKER
     square_width = 0.007
     marker_width = square_width * 0.5
     squares_wide = 7
     squares_high = 9
 
+    # FOR IR CALIB MARKER
     # square_width = 0.00975
     # marker_width = square_width * 0.75
     # squares_wide = 7

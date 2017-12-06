@@ -103,7 +103,7 @@ def main():
 
     arduino = None
     if use_arduino:
-        arduino = serial.Serial('/dev/ttyACM2', 19200, timeout=.5)
+        arduino = serial.Serial('/dev/ttyACM0', 19200, timeout=.5)
 
     process4 = subprocess.Popen(["mkdir", "-p", output_path], stdout=subprocess.PIPE)
     cv2.waitKey(100)

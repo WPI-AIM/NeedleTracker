@@ -55,10 +55,13 @@ SEND_MESSAGES = False
 MAG_THRESHOLD = 10
 FRAME_THRESHOLD = 5
 
+TARGET_SET = False
 
 def main():
     global SEND_MESSAGES, STATE, load_video_path, use_connection, use_recorded_video,\
-        load_video_path, save_video, use_target_segmentation, use_arduino, no_registration, FRAME_SIZE
+        load_video_path, save_video, use_target_segmentation, use_arduino, no_registration, FRAME_SIZE, TARGET_SET
+
+
 
     # Load xml config file. This is for values that possibly need to be changed but are likely to stay the same for many runs.
     tree = ET.parse('config.xml')
@@ -332,8 +335,13 @@ def main():
             # ret, aux_frame = cap_aux.read()
             aux_frame = None
 
-            if cv2.waitKey(1) == ord('q') or camera_top_current_frame is None or camera_side_current_frame is None:
+            input = cv2.waitKey(1)
+
+            if input == ord('q') or camera_top_current_frame is None or camera_side_current_frame is None:
                 break
+            elif input == ord('a'):
+                # Toggle target status
+                TARGET_SET = not TARGET_SET
 
             top_frames.append(camera_top_current_frame)
             side_frames.append(camera_side_current_frame)
@@ -392,6 +400,13 @@ def main():
             else:
                 print("TARGET REFRACTION COMPENSATION FAILED!")
 
+            # Don't claim that automatically-generated target poses are accurate if they fail refraction compensation
+            if use_target_segmentation:
+                if success_compensation_target:
+                    TARGET_SET = True
+                else:
+                    TARGET_SET = False
+
             time_delta = time.clock() - time_last
             time_last = time.clock()
             times.append(time_delta)
@@ -421,7 +436,11 @@ def main():
             print(transform_registration_marker_to_target)
 
             if use_connection:
-                s.send(compose_OpenIGTLink_message(transform_registration_marker_to_target))
+                s.send(compose_OpenIGTLink_transform(transform_registration_marker_to_target))
+                if TARGET_SET:
+                    s.send(compose_OpenIGTLink_status(1, 0, "TARGET_SET"))
+                else:
+                    s.send(compose_OpenIGTLink_status(13, 0, "NO_TARGET_SET"))
 
             transform_registration_marker_to_tip = np.array([[0, 0, 1, 0],
                                                              [0, 0, 0, 0],
@@ -471,7 +490,7 @@ def main():
             side_path.append(tracker_side.position_tip)
 
             if use_connection:
-                s.send(compose_OpenIGTLink_message(transform_registration_marker_to_tip))
+                s.send(compose_OpenIGTLink_transform(transform_registration_marker_to_tip))
 
             camera_top_with_marker = draw_tip_path(camera_top_with_marker,
                                                    top_path)
@@ -666,7 +685,7 @@ def make_homogeneous_tform(rotation=np.eye(3), translation=np.zeros((3,1))):
     homogeneous[0:3, 3] = translation.reshape((3,1))[:,0]
     return homogeneous
 
-def compose_OpenIGTLink_message(input_tform):
+def compose_OpenIGTLink_transform(input_tform):
     body = struct.pack('!12f',
                        float(input_tform[0, 0]), float(input_tform[1, 0]), float(input_tform[2, 0]),
                        float(input_tform[0, 1]), float(input_tform[1, 1]), float(input_tform[2, 1]),
@@ -674,6 +693,19 @@ def compose_OpenIGTLink_message(input_tform):
                        float(input_tform[0, 3]), float(input_tform[1, 3]), float(input_tform[2, 3]))
     bodysize = 48
     return struct.pack('!H12s20sIIQQ', 1, str('TRANSFORM'), str('SIMULATOR'), int(time.time()), 0, bodysize, 0) + body
+
+# def compose_OpenIGTLink_string(input_string):
+#     body = struct.pack('!4s', input_string)
+#     print(body)
+#     bodysize = 4
+#     result = struct.pack('!H12s20sIIQQ', 1, str('STRING'), str('SIMULATOR'), int(time.time()), 0, bodysize, 0) + body
+#     print(result)
+#     return result
+
+def compose_OpenIGTLink_status(input_status, subcode, message):
+    body = struct.pack('!HQ20s', input_status, subcode, message)
+    bodysize = 30
+    return struct.pack('!H12s20sIIQQ', 1, str('STATUS'), str('SIMULATOR'), int(time.time()), 0, bodysize, 0) + body
 
 def drawlines(img1, line):
     ''' img1 - image on which we draw the epilines for the points in img2

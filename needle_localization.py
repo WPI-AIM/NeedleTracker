@@ -522,21 +522,29 @@ def main():
             cv2.putText(camera_side_with_marker, "Side", (5,20), font, 0.5, text_color)
 
 
-            cv2.putText(data_frame, 'Delta: ' + make_data_string(delta),
-                        (10, 50), font, 1, text_color)
+            # cv2.putText(data_frame, 'Delta: ' + make_data_string(delta),
+            #             (10, 50), font, 1, text_color)
+            #
+            # cv2.putText(data_frame, 'Target: ' + make_data_string(position_target_corrected),
+            #             (10, 100), font, 1, text_color)
+            #
+            # cv2.putText(data_frame, 'Tip: ' + make_data_string(position_tip_corrected),
+            #             (10, 150), font, 1, text_color)
+            #
+            # cv2.putText(data_frame, 'Top  2D: ' + str(tracker_top.position_tip[0]) + ' ' + str(tracker_top.position_tip[1]),
+            #             (10, 200), font, 1, text_color)
+            #
+            # cv2.putText(data_frame,
+            #             'Side 2D: ' + str(tracker_side.position_tip[0]) + ' ' + str(tracker_side.position_tip[1]),
+            #             (10, 250), font, 1, text_color)
 
-            cv2.putText(data_frame, 'Target: ' + make_data_string(position_target_corrected),
-                        (10, 100), font, 1, text_color)
+            # cv2.putText(data_frame, output_string,
+            #             (10, 50), font, 1, text_color)
 
-            cv2.putText(data_frame, 'Tip: ' + make_data_string(position_tip_corrected),
-                        (10, 150), font, 1, text_color)
-
-            cv2.putText(data_frame, 'Top  2D: ' + str(tracker_top.position_tip[0]) + ' ' + str(tracker_top.position_tip[1]),
-                        (10, 200), font, 1, text_color)
-
-            cv2.putText(data_frame,
-                        'Side 2D: ' + str(tracker_side.position_tip[0]) + ' ' + str(tracker_side.position_tip[1]),
-                        (10, 250), font, 1, text_color)
+            y0, dy = 50, 4
+            for i, line in enumerate(output_string.split('\n')):
+                y = y0 + i * dy
+                cv2.putText(data_frame, line, (50, y), cv2.font, 1, text_color)
 
             if aux_frame is not None:
                 combined2 = np.concatenate((data_frame, aux_frame), axis=0)

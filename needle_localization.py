@@ -400,6 +400,7 @@ def main():
             position_target_corrected = position_target
             if success_compensation_target:
                 position_target_corrected = np.array([position_target_corrected_list[0], position_target_corrected_list[1], position_target_corrected_list[2]]).reshape((3,1))
+                output_string += "\n"
             else:
                 # print("TARGET REFRACTION COMPENSATION FAILED!")
                 output_string += "TARGET REFRACTION COMPENSATION FAILED!\n"
@@ -457,6 +458,8 @@ def main():
             if not success_compensation_tip:
                 # print("TIP REFRACTION COMPENSATION FAILED!")
                 output_string += "TIP REFRACTION COMPENSATION FAILED!\n"
+            else:
+                output_string += "\n"
 
             if not np.array_equal(position_tip_corrected, position_tip_last) and success_compensation_tip:
                 if arduino is not None:
@@ -541,15 +544,22 @@ def main():
             # cv2.putText(data_frame, output_string,
             #             (10, 50), font, 1, text_color)
 
-            y0, dy = 50, 4
-            for i, line in enumerate(output_string.split('\n')):
-                y = y0 + i * dy
-                cv2.putText(data_frame, line, (50, y), cv2.font, 1, text_color)
+            time_delta = time.clock() - time_last
+            time_last = time.clock()
+            times.append(time_delta)
+            output_string += "Total: " + str(sum(times)) + "\n"
+
+
 
             if aux_frame is not None:
                 combined2 = np.concatenate((data_frame, aux_frame), axis=0)
             else:
                 combined2 = np.concatenate((data_frame, np.zeros_like(data_frame)), axis=0)
+
+            y0, dy = 50, 25
+            for i, line in enumerate(output_string.split('\n')):
+                y = y0 + i * dy
+                cv2.putText(combined2, line, (50, y), cv2.FONT_HERSHEY_SIMPLEX, 0.6, text_color)
 
             out_top.write(camera_top_current_frame)
             out_side.write(camera_side_current_frame)
@@ -572,7 +582,7 @@ def main():
             # print("Diagnostics: " + str(time_delta))
             # print("Total: " + str(sum(times)) + "\n")
 
-            output_string += "Diagnostics: " + str(time_delta) + "\nTotal: " + str(sum(times)) + "\n"
+            # output_string += "Diagnostics: " + str(time_delta) + "\nTotal: " + str(sum(times)) + "\n"
             print(output_string)
         except socket.error, e:
             print "Error: %s" % e

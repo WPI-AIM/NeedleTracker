@@ -325,10 +325,12 @@ def main():
                                                 p2_top)
 
 
-    time_last = time.clock()
+
 
     while cap_top.isOpened():
         try:
+            time_last = time.clock()
+            
             output_string = ""
 
             times = []
@@ -529,12 +531,9 @@ def main():
             position_tip_last = position_tip_corrected
 
             time_delta = time.clock() - time_last
-            time_last = time.clock()
             times.append(time_delta)
-            # print("Diagnostics: " + str(time_delta))
-            # print("Total: " + str(sum(times)) + "\n")
 
-            # output_string += "Diagnostics: " + str(time_delta) + "\nTotal: " + str(sum(times)) + "\n"
+            output_string += "Diagnostics: " + str(time_delta) + "\n"
             print(output_string)
         except socket.error, e:
             print "Error: %s" % e

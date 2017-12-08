@@ -330,7 +330,7 @@ def main():
     while cap_top.isOpened():
         try:
             time_last = time.clock()
-            
+
             output_string = ""
 
             times = []

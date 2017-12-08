@@ -325,10 +325,14 @@ def main():
                                                 p2_top)
 
 
-    time_last = time.clock()
+
 
     while cap_top.isOpened():
         try:
+            time_last = time.clock()
+
+            output_string = ""
+
             times = []
             _, camera_top_current_frame = cap_top.read()
             _, camera_side_current_frame = cap_side.read()
@@ -352,7 +356,7 @@ def main():
             time_delta = time.clock() - time_last
             time_last = time.clock()
             times.append(time_delta)
-            print("2D Localization: " + str(time_delta))
+            output_string += "2D Localization: " + str(time_delta) + "\n"
 
             if use_target_segmentation:
                 target_top.update(camera_top_current_frame)
@@ -397,8 +401,9 @@ def main():
             position_target_corrected = position_target
             if success_compensation_target:
                 position_target_corrected = np.array([position_target_corrected_list[0], position_target_corrected_list[1], position_target_corrected_list[2]]).reshape((3,1))
+                output_string += "\n"
             else:
-                print("TARGET REFRACTION COMPENSATION FAILED!")
+                output_string += "TARGET REFRACTION COMPENSATION FAILED!\n"
 
             # Don't claim that automatically-generated target poses are accurate if they fail refraction compensation
             if use_target_segmentation:
@@ -410,30 +415,18 @@ def main():
             time_delta = time.clock() - time_last
             time_last = time.clock()
             times.append(time_delta)
-            print("Triangulation/Refraction: " + str(time_delta))
+            output_string += "Triangulation/Refraction: " + str(time_delta) + "\n"
 
-            print(position_target, position_target_corrected)
             transform_camera_to_target_uncorrected = make_homogeneous_tform(translation=position_target)
             transform_camera_to_target = make_homogeneous_tform(translation=position_target_corrected)
 
-            # print("Camera to Reg Marker")
-            # print(transform_camera_to_registration_marker)
-
-            # print("Camera to First Target Uncorrected")
-            # print(transform_camera_to_target_uncorrected)
-
-            print("Camera to First Target Corrected")
-            print(transform_camera_to_target)
-
             transform_registration_marker_to_camera = np.linalg.inv(transform_camera_to_registration_marker)
-            # print("Reg Marker to Camera")
-            # print(transform_registration_marker_to_camera)
 
             transform_registration_marker_to_target = np.dot(transform_registration_marker_to_camera, transform_camera_to_target)
             transform_registration_marker_to_target[0:3,0:3] = np.eye(3)
 
-            print("Reg Marker to Target")
-            print(transform_registration_marker_to_target)
+
+            output_string += "Reg Marker to Target\n" + str(transform_registration_marker_to_target) + "\n"
 
             if use_connection:
                 s.send(compose_OpenIGTLink_transform(transform_registration_marker_to_target))
@@ -447,12 +440,14 @@ def main():
                                                              [0, 0, 0, 0],
                                                              [0, 0, 0, 0]])
             if not success_compensation_tip:
-                print("TIP REFRACTION COMPENSATION FAILED!")
+                output_string += "TIP REFRACTION COMPENSATION FAILED!\n"
+            else:
+                output_string += "\n"
 
             if not np.array_equal(position_tip_corrected, position_tip_last) and success_compensation_tip:
                 if arduino is not None:
                     arduino.write('1\n')
-                delta = position_target_corrected - position_tip_corrected
+                delta = position_tip_corrected - position_target_corrected
                 rotation_tip = np.array([[0.99, 0, 0.1],
                                          [0.01, 0.99, 0],
                                          [0, 0.01, 0.99]])
@@ -473,18 +468,13 @@ def main():
 
                 transform_registration_marker_to_tip = np.dot(np.linalg.inv(transform_camera_to_registration_marker), transform_camera_to_tip)
 
-                print("Marker to Tip")
-                print(transform_registration_marker_to_tip)
-
-                # print("Tip to Target")
-                # print(np.dot(np.linalg.inv(transform_registration_marker_to_tip),transform_registration_marker_to_target))
+                output_string += "Reg Marker to Tip\n" + str(transform_registration_marker_to_tip) + "\n"
 
                 position_tip_time = np.concatenate(([[time.clock()]], position_tip_corrected.reshape((3,1))))
                 position_tip_uncorrected_time = np.concatenate(([[time.clock()]], position_tip.reshape((3, 1))))
-                # print(position_tip_time)
+
                 trajectory_corrected.append(position_tip_time)
                 trajectory_uncorrected.append(position_tip_uncorrected_time)
-                # print("Adding point to path")
 
             top_path.append(tracker_top.position_tip)
             side_path.append(tracker_side.position_tip)
@@ -500,7 +490,8 @@ def main():
             time_delta = time.clock() - time_last
             time_last = time.clock()
             times.append(time_delta)
-            print("Comms: " + str(time_delta))
+            # print("Comms: " + str(time_delta))
+            output_string += "Comms: " + str(time_delta) + "\n"
 
             font = cv2.FONT_HERSHEY_DUPLEX
             text_color = (0, 255, 0)
@@ -509,27 +500,20 @@ def main():
             cv2.putText(camera_top_with_marker, "Top", (5,20), font, 0.5, text_color)
             cv2.putText(camera_side_with_marker, "Side", (5,20), font, 0.5, text_color)
 
-
-            cv2.putText(data_frame, 'Delta: ' + make_data_string(delta),
-                        (10, 50), font, 1, text_color)
-
-            cv2.putText(data_frame, 'Target: ' + make_data_string(position_target_corrected),
-                        (10, 100), font, 1, text_color)
-
-            cv2.putText(data_frame, 'Tip: ' + make_data_string(trajectory_corrected[-1][1:,:].reshape((3,1))),
-                        (10, 150), font, 1, text_color)
-
-            cv2.putText(data_frame, 'Top  2D: ' + str(tracker_top.position_tip[0]) + ' ' + str(tracker_top.position_tip[1]),
-                        (10, 200), font, 1, text_color)
-
-            cv2.putText(data_frame,
-                        'Side 2D: ' + str(tracker_side.position_tip[0]) + ' ' + str(tracker_side.position_tip[1]),
-                        (10, 250), font, 1, text_color)
+            time_delta = time.clock() - time_last
+            time_last = time.clock()
+            times.append(time_delta)
+            output_string += "Total: " + str(sum(times)) + "\n"
 
             if aux_frame is not None:
                 combined2 = np.concatenate((data_frame, aux_frame), axis=0)
             else:
                 combined2 = np.concatenate((data_frame, np.zeros_like(data_frame)), axis=0)
+
+            y0, dy = 50, 25
+            for i, line in enumerate(output_string.split('\n')):
+                y = y0 + i * dy
+                cv2.putText(combined2, line, (50, y), cv2.FONT_HERSHEY_SIMPLEX, 0.6, text_color)
 
             out_top.write(camera_top_current_frame)
             out_side.write(camera_side_current_frame)
@@ -547,10 +531,10 @@ def main():
             position_tip_last = position_tip_corrected
 
             time_delta = time.clock() - time_last
-            time_last = time.clock()
             times.append(time_delta)
-            print("Diagnostics: " + str(time_delta))
-            print("Total: " + str(sum(times)) + "\n")
+
+            output_string += "Diagnostics: " + str(time_delta) + "\n"
+            print(output_string)
         except socket.error, e:
             print "Error: %s" % e
             break

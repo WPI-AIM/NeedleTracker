@@ -334,6 +334,10 @@ def main():
             output_string = ""
 
             times = []
+
+            if arduino is not None:
+                arduino.write('1\n')
+
             _, camera_top_current_frame = cap_top.read()
             _, camera_side_current_frame = cap_side.read()
             # ret, aux_frame = cap_aux.read()
@@ -445,8 +449,6 @@ def main():
                 output_string += "\n"
 
             if not np.array_equal(position_tip_corrected, position_tip_last) and success_compensation_tip:
-                if arduino is not None:
-                    arduino.write('1\n')
                 delta = position_tip_corrected - position_target_corrected
                 rotation_tip = np.array([[0.99, 0, 0.1],
                                          [0.01, 0.99, 0],

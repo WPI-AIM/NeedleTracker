@@ -168,7 +168,8 @@ def main():
 
         gray = cv2.cvtColor(frame_side, cv2.COLOR_BGR2GRAY)
 
-
+        if arduino is not None:
+            arduino.write('1\n')
         markerCorners, markerIds, _ = cv2.aruco.detectMarkers(image=frame_side, dictionary=dictionary)
         # print(markerIds)
         if markerIds is not None:
@@ -184,8 +185,6 @@ def main():
             # print(rvec, '\n')
             if ret:
                 # print(rvec)
-                if arduino is not None:
-                    arduino.write('1\n')
                 times.append(time.clock() - time_start)
 
                 rmat, _ = cv2.Rodrigues(np.array(rvec, dtype=np.float32))

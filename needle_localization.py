@@ -205,6 +205,10 @@ def main():
     trajectory_corrected = []
     trajectory_uncorrected = []
 
+    transforms_registration_marker_to_tip = []
+    transforms_registration_marker_to_target = []
+    timestamps = []
+
     top_path = []
     side_path = []
 
@@ -325,7 +329,7 @@ def main():
                                                 p2_top)
 
 
-
+    time_start = time.clock()
 
     while cap_top.isOpened():
         try:
@@ -334,6 +338,12 @@ def main():
             output_string = ""
 
             times = []
+
+            timestamps.append(time.clock() - time_start)
+
+            if arduino is not None:
+                arduino.write('1\n')
+
             _, camera_top_current_frame = cap_top.read()
             _, camera_side_current_frame = cap_side.read()
             # ret, aux_frame = cap_aux.read()
@@ -425,6 +435,8 @@ def main():
             transform_registration_marker_to_target = np.dot(transform_registration_marker_to_camera, transform_camera_to_target)
             transform_registration_marker_to_target[0:3,0:3] = np.eye(3)
 
+            transforms_registration_marker_to_target.append(transform_registration_marker_to_target)
+
 
             output_string += "Reg Marker to Target\n" + str(transform_registration_marker_to_target) + "\n"
 
@@ -445,8 +457,6 @@ def main():
                 output_string += "\n"
 
             if not np.array_equal(position_tip_corrected, position_tip_last) and success_compensation_tip:
-                if arduino is not None:
-                    arduino.write('1\n')
                 delta = position_tip_corrected - position_target_corrected
                 rotation_tip = np.array([[0.99, 0, 0.1],
                                          [0.01, 0.99, 0],
@@ -475,6 +485,12 @@ def main():
 
                 trajectory_corrected.append(position_tip_time)
                 trajectory_uncorrected.append(position_tip_uncorrected_time)
+                transforms_registration_marker_to_tip.append(transform_registration_marker_to_tip)
+            else:
+                trajectory_uncorrected.append(np.zeros((4,1)))
+                trajectory_corrected.append(np.zeros((4, 1)))
+                transforms_registration_marker_to_tip.append(np.eye(4))
+
 
             top_path.append(tracker_top.position_tip)
             side_path.append(tracker_side.position_tip)
@@ -557,10 +573,14 @@ def main():
     trajectory_array_uncorrected = np.array(trajectory_uncorrected)
     # print(trajectoryArray)
     np.savetxt(output_path + "/trajectory.csv", trajectory_array_corrected, delimiter=",")
-    np.savetxt(output_path + "/trajectory_uncorrected.csv", trajectory_array_uncorrected, delimiter=",")
+    # np.savetxt(output_path + "/trajectory_uncorrected.csv", trajectory_array_uncorrected, delimiter=",")
     np.savetxt(output_path + "/trajectory2d.csv", np.concatenate((top_path, side_path), axis=1), delimiter=",")
     np.savez_compressed(output_path + "/trajectory.npz", trajectory=trajectory_array_corrected,
                         top_path=np.array(top_path), side_path=np.array(side_path))
+    np.savez_compressed(output_path + "/trajectory_transforms.npz",
+                        transforms_registration_marker_to_tip=np.array(transforms_registration_marker_to_tip),
+                        transforms_registration_marker_to_target=np.array(transform_registration_marker_to_target),
+                        timestamps=np.array(timestamps))
 
 
 

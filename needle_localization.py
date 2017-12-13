@@ -129,7 +129,7 @@ def main():
 
         process2 = subprocess.Popen(["v4l2-ctl", "-d", "/dev/video" + str(index_camera_top), "-c", "focus_absolute=" + str(camera_top_focus_absolute)], stdout=subprocess.PIPE)
 
-        process3 = subprocess.Popen(["v4l2-ctl", "-d", "/dev/video" + str(index_camera_side), "-c", "focus_absolute=" + str(camera_top_focus_absolute)], stdout=subprocess.PIPE)
+        process3 = subprocess.Popen(["v4l2-ctl", "-d", "/dev/video" + str(index_camera_side), "-c", "focus_absolute=" + str(camera_side_focus_absolute)], stdout=subprocess.PIPE)
 
         process4 = subprocess.Popen(["v4l2-ctl", "-d /dev/video" + str(index_camera_top), "-c", "contrast="+ str(camera_top_contrast), "brightness="+ str(camera_top_brightness)], stdout=subprocess.PIPE)
 

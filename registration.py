@@ -99,6 +99,7 @@ def main():
 
     # cv2.namedWindow("Camera Top")
     cv2.namedWindow("Camera Side")
+    cv2.moveWindow("Camera Side", 1, 0)
 
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
     objp = np.zeros((7 * 9, 3), np.float32)

@@ -47,6 +47,7 @@ def main():
 
 
     cv2.namedWindow("Camera Side")
+    cv2.moveWindow("Camera Side", 1, 0)
 
     phantom_board_data = np.load("./data/phantom_board.npz")
 

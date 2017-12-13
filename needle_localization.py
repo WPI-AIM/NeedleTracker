@@ -50,6 +50,9 @@ TARGET_SIDE_A = (int(261), int(230))
 TARGET_TOP_B = (int(0), int(0))
 TARGET_SIDE_B = (int(0), int(0))
 
+ROI_CENTER_MANUAL_TOP = (0,0)
+ROI_CENTER_MANUAL_SIDE = (0,0)
+
 SEND_MESSAGES = False
 
 MAG_THRESHOLD = 10
@@ -92,9 +95,11 @@ def main():
     index_camera_side = int(root.find("index_camera_side").text)
     index_camera_aux = int(root.find("index_camera_aux").text)
 
-
     dof_params_top = root.find("dof_top")
     dof_params_side = root.find("dof_side")
+
+    roi_width = int(root.find("roi_width").text)
+    roi_height = int(root.find("roi_height").text)
 
     output_path = output_dir + output_prefix + '_' + time.strftime("%Y_%m_%d_%H_%M_%S")
     print(output_path)
@@ -113,15 +118,6 @@ def main():
 
     if not use_recorded_video:
         # For both cameras, turn off autofocus and set the same absolute focal depth the one used during calibration.
-        # command = 'v4l2-ctl -d /dev/video1 -c focus_auto=0'
-        # process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
-        # cv2.waitKey(100)
-        # command = 'v4l2-ctl -d /dev/video1 -c focus_absolute=' + str(camera_top_focus_absolute)
-        # command = 'v4l2-ctl -d /dev/video1 -c focus_auto=0 focus_absolute=' + str(camera_top_focus_absolute)\
-        #           + ' contrast='+ str(camera_top_contrast) + ' brightness='+ str(camera_top_brightness)\
-        #           + ' -d /dev/video2 -c focus_auto=0 focus_absolute=' + str(camera_side_focus_absolute)\
-        #           + ' contrast=' + str(camera_side_contrast) + ' brightness='+ str(camera_side_brightness)\
-        #           + ' v4l2-ctl -d /dev/video3 -c focus_auto=0 focus_absolute=60'
 
         process = subprocess.Popen(["v4l2-ctl", "-d", "/dev/video" + str(index_camera_top), "-c", "focus_auto=0"], stdout=subprocess.PIPE)
 
@@ -193,8 +189,8 @@ def main():
 
     FRAME_SIZE = (camera_top_width, camera_top_height)
 
-    camera_top_roi_size = (200, 200)
-    camera_side_roi_size = (200, 200)
+    camera_top_roi_size = (roi_width, roi_height)
+    camera_side_roi_size = (roi_width, roi_height)
 
     camera_top_roi_center = (int(camera_top_width * 0.8), camera_top_height / 2)
     camera_side_roi_center = (int(camera_side_width * 0.8), camera_side_height / 2)

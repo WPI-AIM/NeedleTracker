@@ -2,9 +2,8 @@
 <data>
 	<ip>192.168.0.100</ip>
 	<port>18944</port>
-	<output_dir>./data/</output_dir>
+	<output_dir>./data//</output_dir>
 	<prefix>debug</prefix>
-	<!--<prefix>optitrack</prefix>-->
 	<calibration_file>calibration.npz</calibration_file>
 
 	<index_camera_top>1</index_camera_top>
@@ -28,6 +27,9 @@
 	<camera_side_focus_absolute>60</camera_side_focus_absolute>
 	<camera_side_contrast>200</camera_side_contrast>
 	<camera_side_brightness>180</camera_side_brightness>
+
+	<roi_width>200</roi_width>
+	<roi_height>300</roi_height>
 
 	<kernel_top>5</kernel_top>
 	<kernel_side>5</kernel_side>

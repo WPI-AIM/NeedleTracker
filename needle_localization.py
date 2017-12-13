@@ -244,6 +244,7 @@ def main():
 
     cv2.namedWindow("Combined")
     cv2.setMouseCallback("Combined", get_coords)
+    cv2.moveWindow("Combined", 1, 0)
 
     camera_top_farneback_parameters = (float(dof_params_top.find("pyr_scale").text),
                                        int(dof_params_top.find("levels").text),

@@ -50,6 +50,12 @@ TARGET_SIDE_A = (int(261), int(230))
 TARGET_TOP_B = (int(0), int(0))
 TARGET_SIDE_B = (int(0), int(0))
 
+ROI_CENTER_MANUAL_TOP = (0,0)
+ROI_CENTER_MANUAL_SIDE = (0,0)
+MANUAL_ROI_TOP_SET = False
+MANUAL_ROI_SIDE_SET = False
+
+
 SEND_MESSAGES = False
 
 MAG_THRESHOLD = 10
@@ -59,7 +65,8 @@ TARGET_SET = False
 
 def main():
     global SEND_MESSAGES, STATE, load_video_path, use_connection, use_recorded_video,\
-        load_video_path, save_video, use_target_segmentation, use_arduino, no_registration, FRAME_SIZE, TARGET_SET
+        load_video_path, save_video, use_target_segmentation, use_arduino, no_registration,\
+        FRAME_SIZE, TARGET_SET, ROI_CENTER_MANUAL_TOP, ROI_CENTER_MANUAL_SIDE, MANUAL_ROI_TOP_SET, MANUAL_ROI_SIDE_SET
 
 
 
@@ -92,9 +99,11 @@ def main():
     index_camera_side = int(root.find("index_camera_side").text)
     index_camera_aux = int(root.find("index_camera_aux").text)
 
-
     dof_params_top = root.find("dof_top")
     dof_params_side = root.find("dof_side")
+
+    roi_width = int(root.find("roi_width").text)
+    roi_height = int(root.find("roi_height").text)
 
     output_path = output_dir + output_prefix + '_' + time.strftime("%Y_%m_%d_%H_%M_%S")
     print(output_path)
@@ -113,15 +122,6 @@ def main():
 
     if not use_recorded_video:
         # For both cameras, turn off autofocus and set the same absolute focal depth the one used during calibration.
-        # command = 'v4l2-ctl -d /dev/video1 -c focus_auto=0'
-        # process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
-        # cv2.waitKey(100)
-        # command = 'v4l2-ctl -d /dev/video1 -c focus_absolute=' + str(camera_top_focus_absolute)
-        # command = 'v4l2-ctl -d /dev/video1 -c focus_auto=0 focus_absolute=' + str(camera_top_focus_absolute)\
-        #           + ' contrast='+ str(camera_top_contrast) + ' brightness='+ str(camera_top_brightness)\
-        #           + ' -d /dev/video2 -c focus_auto=0 focus_absolute=' + str(camera_side_focus_absolute)\
-        #           + ' contrast=' + str(camera_side_contrast) + ' brightness='+ str(camera_side_brightness)\
-        #           + ' v4l2-ctl -d /dev/video3 -c focus_auto=0 focus_absolute=60'
 
         process = subprocess.Popen(["v4l2-ctl", "-d", "/dev/video" + str(index_camera_top), "-c", "focus_auto=0"], stdout=subprocess.PIPE)
 
@@ -193,8 +193,8 @@ def main():
 
     FRAME_SIZE = (camera_top_width, camera_top_height)
 
-    camera_top_roi_size = (200, 200)
-    camera_side_roi_size = (200, 200)
+    camera_top_roi_size = (roi_width, roi_height)
+    camera_side_roi_size = (roi_width, roi_height)
 
     camera_top_roi_center = (int(camera_top_width * 0.8), camera_top_height / 2)
     camera_side_roi_center = (int(camera_side_width * 0.8), camera_side_height / 2)
@@ -363,8 +363,10 @@ def main():
             top_frames.append(camera_top_current_frame)
             side_frames.append(camera_side_current_frame)
 
-            tracker_side.update(side_frames)
-            tracker_top.update(top_frames)
+            tracker_side.update(side_frames, MANUAL_ROI_SIDE_SET, ROI_CENTER_MANUAL_SIDE)
+            tracker_top.update(top_frames, MANUAL_ROI_TOP_SET, ROI_CENTER_MANUAL_TOP)
+            MANUAL_ROI_TOP_SET = False
+            MANUAL_ROI_SIDE_SET = False
 
             time_delta = time.clock() - time_last
             time_last = time.clock()
@@ -656,20 +658,22 @@ def draw_target_markers(image, target_coords_a, target_coords_b):
     return output
 
 def get_coords(event, x, y, flags, param):
-    global TARGET_TOP_A, TARGET_TOP_B, TARGET_SIDE_A, TARGET_SIDE_B, FRAME_SIZE
+    global TARGET_TOP_A, TARGET_SIDE_A, FRAME_SIZE, ROI_CENTER_MANUAL_TOP, ROI_CENTER_MANUAL_SIDE, MANUAL_ROI_TOP_SET, MANUAL_ROI_SIDE_SET
     if x < FRAME_SIZE[0]:
         if y < FRAME_SIZE[1]:
             # click in top image
             if event == cv2.EVENT_LBUTTONDOWN:
                 TARGET_TOP_A = x, y
             elif event == cv2.EVENT_MBUTTONDOWN:
-                TARGET_TOP_B = x, y
+                ROI_CENTER_MANUAL_TOP = x, y
+                MANUAL_ROI_TOP_SET = True
         else:
             # click in bottom image
             if event == cv2.EVENT_LBUTTONDOWN:
                 TARGET_SIDE_A = x, y-FRAME_SIZE[1]
             elif event == cv2.EVENT_MBUTTONDOWN:
-                TARGET_SIDE_B = x, y
+                ROI_CENTER_MANUAL_SIDE = x, y-FRAME_SIZE[1]
+                MANUAL_ROI_SIDE_SET = True
 
 def transform_to_robot_coords(input):
     return np.array([-input[2], input[1], -input[0]])

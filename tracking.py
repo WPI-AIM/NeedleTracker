@@ -126,7 +126,10 @@ class TipTracker:
         return (min(max(self.roi_size[0] / 2, position_tip[0]), self.image_width - self.roi_size[0] / 2),
                 min(max(self.roi_size[1] / 2, position_tip[1]), self.image_height - self.roi_size[1] / 2))
 
-    def update(self, frames):
+    def update(self, frames, use_manual_roi=False, manual_roi=(0,0)):
+        if use_manual_roi:
+            self.roi_center = self._get_new_valid_roi(manual_roi)
+
         frame_current = frames[-1]
         frame_past = frames[0]
         section_current = self._get_section(frame_current)

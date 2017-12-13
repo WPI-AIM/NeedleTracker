@@ -434,7 +434,6 @@ def main():
 
             # transform_camera_to_target_uncorrected = make_homogeneous_tform(translation=position_target)
             transform_camera_to_target = make_homogeneous_tform(translation=position_target_corrected)
-            target_corrected.append(position_target_corrected)
 
             transform_registration_marker_to_camera = np.linalg.inv(transform_camera_to_registration_marker)
 
@@ -490,13 +489,14 @@ def main():
                 position_tip_uncorrected_time = np.concatenate(([[time.clock()]], position_tip.reshape((3, 1))))
 
                 trajectory_corrected.append(position_tip_time)
+                target_corrected.append(position_target_corrected)
                 trajectory_uncorrected.append(position_tip_uncorrected_time)
                 transforms_registration_marker_to_tip.append(transform_registration_marker_to_tip)
             else:
                 trajectory_corrected.append(np.array([time.clock(), 0, 0, 0]).reshape((4,1)))
+                target_corrected.append(position_target_corrected)
                 trajectory_uncorrected.append(np.array([time.clock(), 0, 0, 0]).reshape((4,1)))
                 transforms_registration_marker_to_tip.append(np.eye(4))
-
 
             top_path.append(tracker_top.position_tip)
             side_path.append(tracker_side.position_tip)
@@ -578,7 +578,8 @@ def main():
     trajectory_array_corrected = np.array(trajectory_corrected)
     target_array = np.array(target_corrected)
 
-
+    print(trajectory_array_corrected.shape)
+    print(target_array.shape)
     combined_array =np.concatenate((trajectory_array_corrected, target_array),1)
 
     np.savetxt(output_path + "/trajectory.csv", combined_array, delimiter=",")

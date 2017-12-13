@@ -52,6 +52,9 @@ TARGET_SIDE_B = (int(0), int(0))
 
 ROI_CENTER_MANUAL_TOP = (0,0)
 ROI_CENTER_MANUAL_SIDE = (0,0)
+MANUAL_ROI_TOP_SET = False
+MANUAL_ROI_SIDE_SET = False
+
 
 SEND_MESSAGES = False
 
@@ -62,7 +65,8 @@ TARGET_SET = False
 
 def main():
     global SEND_MESSAGES, STATE, load_video_path, use_connection, use_recorded_video,\
-        load_video_path, save_video, use_target_segmentation, use_arduino, no_registration, FRAME_SIZE, TARGET_SET
+        load_video_path, save_video, use_target_segmentation, use_arduino, no_registration,\
+        FRAME_SIZE, TARGET_SET, ROI_CENTER_MANUAL_TOP, ROI_CENTER_MANUAL_SIDE, MANUAL_ROI_TOP_SET, MANUAL_ROI_SIDE_SET
 
 
 
@@ -359,8 +363,10 @@ def main():
             top_frames.append(camera_top_current_frame)
             side_frames.append(camera_side_current_frame)
 
-            tracker_side.update(side_frames)
-            tracker_top.update(top_frames)
+            tracker_side.update(side_frames, MANUAL_ROI_SIDE_SET, ROI_CENTER_MANUAL_SIDE)
+            tracker_top.update(top_frames, MANUAL_ROI_TOP_SET, ROI_CENTER_MANUAL_TOP)
+            MANUAL_ROI_TOP_SET = False
+            MANUAL_ROI_SIDE_SET = False
 
             time_delta = time.clock() - time_last
             time_last = time.clock()
@@ -652,20 +658,22 @@ def draw_target_markers(image, target_coords_a, target_coords_b):
     return output
 
 def get_coords(event, x, y, flags, param):
-    global TARGET_TOP_A, TARGET_TOP_B, TARGET_SIDE_A, TARGET_SIDE_B, FRAME_SIZE
+    global TARGET_TOP_A, TARGET_SIDE_A, FRAME_SIZE, ROI_CENTER_MANUAL_TOP, ROI_CENTER_MANUAL_SIDE, MANUAL_ROI_TOP_SET, MANUAL_ROI_SIDE_SET
     if x < FRAME_SIZE[0]:
         if y < FRAME_SIZE[1]:
             # click in top image
             if event == cv2.EVENT_LBUTTONDOWN:
                 TARGET_TOP_A = x, y
             elif event == cv2.EVENT_MBUTTONDOWN:
-                TARGET_TOP_B = x, y
+                ROI_CENTER_MANUAL_TOP = x, y
+                MANUAL_ROI_TOP_SET = True
         else:
             # click in bottom image
             if event == cv2.EVENT_LBUTTONDOWN:
                 TARGET_SIDE_A = x, y-FRAME_SIZE[1]
             elif event == cv2.EVENT_MBUTTONDOWN:
-                TARGET_SIDE_B = x, y
+                ROI_CENTER_MANUAL_SIDE = x, y-FRAME_SIZE[1]
+                MANUAL_ROI_SIDE_SET = True
 
 def transform_to_robot_coords(input):
     return np.array([-input[2], input[1], -input[0]])

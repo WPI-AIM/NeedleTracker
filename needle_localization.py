@@ -205,6 +205,8 @@ def main():
     trajectory_corrected = []
     trajectory_uncorrected = []
 
+    target_corrected = []
+
     transforms_registration_marker_to_tip = []
     transforms_registration_marker_to_target = []
     timestamps = []
@@ -428,8 +430,9 @@ def main():
             times.append(time_delta)
             output_string += "Triangulation/Refraction: " + str(time_delta) + "\n"
 
-            transform_camera_to_target_uncorrected = make_homogeneous_tform(translation=position_target)
+            # transform_camera_to_target_uncorrected = make_homogeneous_tform(translation=position_target)
             transform_camera_to_target = make_homogeneous_tform(translation=position_target_corrected)
+            target_corrected.append(position_target_corrected)
 
             transform_registration_marker_to_camera = np.linalg.inv(transform_camera_to_registration_marker)
 
@@ -488,8 +491,8 @@ def main():
                 trajectory_uncorrected.append(position_tip_uncorrected_time)
                 transforms_registration_marker_to_tip.append(transform_registration_marker_to_tip)
             else:
-                trajectory_uncorrected.append(np.zeros((4,1)))
-                trajectory_corrected.append(np.zeros((4, 1)))
+                trajectory_corrected.append(np.array([time.clock(), 0, 0, 0]).reshape((4,1)))
+                trajectory_uncorrected.append(np.array([time.clock(), 0, 0, 0]).reshape((4,1)))
                 transforms_registration_marker_to_tip.append(np.eye(4))
 
 
@@ -571,19 +574,21 @@ def main():
     cv2.destroyAllWindows()
 
     trajectory_array_corrected = np.array(trajectory_corrected)
-    trajectory_array_uncorrected = np.array(trajectory_uncorrected)
-    # print(trajectoryArray)
-    np.savetxt(output_path + "/trajectory.csv", trajectory_array_corrected, delimiter=",")
-    # np.savetxt(output_path + "/trajectory_uncorrected.csv", trajectory_array_uncorrected, delimiter=",")
+    target_array = np.array(target_corrected)
+
+
+    combined_array =np.concatenate((trajectory_array_corrected, target_array),1)
+
+    np.savetxt(output_path + "/trajectory.csv", combined_array, delimiter=",")
     np.savetxt(output_path + "/trajectory2d.csv", np.concatenate((top_path, side_path), axis=1), delimiter=",")
-    np.savez_compressed(output_path + "/trajectory.npz", trajectory=trajectory_array_corrected,
-                        top_path=np.array(top_path), side_path=np.array(side_path))
-    np.savez_compressed(output_path + "/trajectory_transforms.npz",
+    np.savez_compressed(output_path + "/trajectory.npz",
+                        trajectory_tip=trajectory_array_corrected,
+                        trajectory_tip_uncorrected=np.array(trajectory_uncorrected),
+                        top_path=np.array(top_path),
+                        side_path=np.array(side_path),
                         transforms_registration_marker_to_tip=np.array(transforms_registration_marker_to_tip),
-                        transforms_registration_marker_to_target=np.array(transform_registration_marker_to_target),
+                        transforms_registration_marker_to_target=np.array(transforms_registration_marker_to_target),
                         timestamps=np.array(timestamps))
-
-
 
 class Struct:
     def __init__(self, **entries):

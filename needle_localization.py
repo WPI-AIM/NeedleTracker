@@ -553,7 +553,7 @@ def main():
 
             combined_flow = np.array(np.concatenate((tracker_top.flow_diagnostic, tracker_side.flow_diagnostic), axis=1), dtype=np.uint8)
             cv2.imshow('Combined', combined)
-            # cv2.imshow('Combined Flow', combined_flow)
+            cv2.imshow('Flow', combined_flow)
             out_combined.write(combined)
             out_flow.write(combined_flow)
 

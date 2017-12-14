@@ -3,14 +3,14 @@
 	<ip>192.168.0.100</ip>
 	<port>18944</port>
 	<output_dir>./data/Trial2/</output_dir>
-	<prefix>insertion</prefix>
+	<prefix>debug</prefix>
 	<calibration_file>calibration.npz</calibration_file>
 
 	<index_camera_top>1</index_camera_top>
 	<index_camera_side>2</index_camera_side>
 	<index_camera_aux>3</index_camera_aux>
 
-	<hue_motion>110</hue_motion>
+	<hue_motion>135</hue_motion>
 	<hue_motion_range>20</hue_motion_range>
 
 	<hue_target_min>40</hue_target_min>
@@ -34,7 +34,7 @@
 	<kernel_top>5</kernel_top>
 	<kernel_side>5</kernel_side>
 
-	<threshold_mag>4</threshold_mag>
+	<threshold_mag>5</threshold_mag>
 
 	<dof_top>
 		<pyr_scale>0.5</pyr_scale>

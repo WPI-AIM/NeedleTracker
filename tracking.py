@@ -67,16 +67,16 @@ class TipTracker:
         self.flow_previous = flow
         flow_magnitude, flow_angle = cv2.cartToPolar(flow[..., 0], flow[..., 1])
 
-        hsv = np.zeros_like(image_current)
+        hsv = np.zeros_like(image_current, dtype=np.float32)
         hsv[..., 1] = 255
 
-        hsv[..., 0] = ((flow_angle+90)%360 * (180 / np.pi)) * 0.5
+        hsv[..., 0] = ((flow_angle+(np.pi/2))%(2*np.pi) * (180 / np.pi)) * 0.5
         hsv[..., 2] = flow_magnitude
 
         hsv_rescaled = hsv.copy()
-        hsv_rescaled[..., 2] = np.clip(hsv_rescaled[..., 2]*int(120/self.threshold_mag), 0, 255)
-
-        bgr = cv2.cvtColor(hsv_rescaled, cv2.COLOR_HSV2BGR)
+        hsv_rescaled[..., 2] = np.clip(hsv_rescaled[..., 2]*(120/self.threshold_mag), 0, 255)
+        print(hsv)
+        bgr = cv2.cvtColor(np.array(hsv_rescaled, dtype=np.uint8), cv2.COLOR_HSV2BGR)
         # print(np.max(flow_magnitude), np.std(flow_magnitude), np.mean(flow_magnitude))
         return hsv, bgr, flow_magnitude
 

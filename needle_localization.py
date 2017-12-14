@@ -344,7 +344,7 @@ def main():
     phantom_board_data = np.load("./data/phantom_board.npz")
     dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
     board = cv2.aruco.Board_create(objPoints=phantom_board_data['obj_points'], dictionary=dictionary, ids=phantom_board_data['ids'])
-    tracker_phantom = tracking.PhantomTracker(board, dictionary, mat_left, dist_left, corner_points=None)
+    tracker_phantom = tracking.PhantomTracker(board, dictionary, mat_left, dist_left, dims_phantom=phantom_dims)
 
 
     time_start = time.time()
@@ -384,6 +384,7 @@ def main():
             MANUAL_ROI_SIDE_SET = False
 
             tracker_phantom.update(camera_side_current_frame)
+            # tracker_phantom.get_phantom_corner_image_points()
 
             time_delta = time.time() - time_last
             time_last = time.time()
@@ -527,6 +528,9 @@ def main():
                                                     side_path)
 
             camera_side_with_marker = tracker_phantom.draw_phantom_axes(camera_side_with_marker)
+
+            # camera_side_with_marker = tracker_phantom.draw_phantom_corners(camera_side_with_marker)
+            tracker_phantom.get_phantom_mask(np.zeros_like(camera_side_with_marker))
 
             time_delta = time.time() - time_last
             time_last = time.time()

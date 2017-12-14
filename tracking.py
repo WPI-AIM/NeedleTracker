@@ -263,7 +263,7 @@ class PhantomTracker:
                                          tvec=tvec_camera,
                                          cameraMatrix=self.mat_camera,
                                          distCoeffs=self.dist_camera)
-        self.image_points = pts.reshape((-1,2))
+        self.image_points = pts.reshape((-1,2)).astype(np.int32)
         # print("Image point")
         print(self.image_points)
 
@@ -278,8 +278,8 @@ class PhantomTracker:
             cv2.circle(output, (int(point[0]), int(point[1])), 7, (0, 255, 255))
         return output
 
-    def get_phantom_mask(self, image, rvec_camera=np.eye(3), tvec_camera=np.zeros((3,1))):
+    def get_phantom_mask(self, shape, rvec_camera=np.eye(3), tvec_camera=np.zeros((3,1))):
         self.get_phantom_corner_image_points()
-        filled_mask =  cv2.fillConvexPoly(image, self.image_points.astype(np.int32), len(self.image_points), 255)
+        filled_mask =  cv2.cvtColor(cv2.fillConvexPoly(np.zeros((480,640), dtype=np.uint8), self.image_points, len(self.image_points), 255), cv2.COLOR_GRAY2BGR)
         cv2.imshow("Phantom mask", filled_mask)
 

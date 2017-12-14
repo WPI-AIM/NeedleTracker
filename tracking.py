@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+import itertools
+from collections import deque
 
 class TipTracker:
     def __init__(self, params, image_width, image_height, heading_expected,
@@ -64,18 +66,21 @@ class TipTracker:
                                                 self.flow_params[6])# + cv2.OPTFLOW_USE_INITIAL_FLOW)
         self.flow_previous = flow
         flow_magnitude, flow_angle = cv2.cartToPolar(flow[..., 0], flow[..., 1])
+        return flow_magnitude, flow_angle
 
-        hsv = np.zeros_like(image_current, dtype=np.float32)
+
+    def _dense_flow_to_image(self, flow_mag, flow_angle, shape):
+        hsv = np.zeros(shape, dtype=np.float32)
         hsv[..., 1] = 255
 
         hsv[..., 0] = ((flow_angle+(np.pi/2))%(2*np.pi) * (180 / np.pi)) * 0.5
-        hsv[..., 2] = flow_magnitude
+        hsv[..., 2] = flow_mag
 
         hsv_rescaled = hsv.copy()
         hsv_rescaled[..., 2] = np.clip(hsv_rescaled[..., 2]*(120/self.threshold_mag), 0, 255)
         bgr = cv2.cvtColor(np.array(hsv_rescaled, dtype=np.uint8), cv2.COLOR_HSV2BGR)
         # print(np.max(flow_magnitude), np.std(flow_magnitude), np.mean(flow_magnitude))
-        return hsv, bgr, flow_magnitude
+        return hsv, bgr
 
     def _filter_by_heading(self, flow_hsv):
         max_value = 255
@@ -122,13 +127,29 @@ class TipTracker:
     def update(self, frames, use_manual_roi=False, manual_roi=(0,0)):
         if use_manual_roi:
             self.roi_center = self._get_new_valid_roi(manual_roi)
+        num_frames = len(frames)
 
         frame_current = frames[-1]
-        frame_past = frames[0]
         section_current = self._get_section(frame_current)
-        section_past = self._get_section(frame_past)
 
-        self.flow_hsv, self.flow_bgr, self.flow_mag = self._get_dense_flow(section_past, section_current)
+        frames_past = deque(itertools.islice(frames, 0, num_frames-1))
+        frame_past = frames_past[-1]
+
+        flow_mags = []
+        flow_angles = []
+        for frame_past in frames_past:
+            section_past = self._get_section(frame_past)
+            flow_mag, flow_angle = self._get_dense_flow(section_past, section_current)
+            flow_mags.append(flow_mag)
+            flow_angles.append(flow_angle)
+
+        flow_mag_mean = np.mean(np.array(flow_mags), axis=0)
+        flow_angle_mean = np.mean(np.array(flow_angles), axis=0)
+
+        # section_past = self._get_section(frame_past)
+        # flow_mag, flow_angle = self._get_dense_flow(section_past, section_current)
+
+        self.flow_hsv, self.flow_bgr = self._dense_flow_to_image(flow_mag_mean, flow_angle_mean, section_current.shape)
 
         flow_thresholded = self._filter_by_heading(self.flow_hsv)
 

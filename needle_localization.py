@@ -160,22 +160,30 @@ def main():
     mat_right_obj = Struct(**cal_right.camera_matrix)
     mat_right = np.reshape(np.array(mat_right_obj.data),(mat_right_obj.rows,mat_right_obj.cols))
 
-    translation_side_to_top = np.array([9.336674963296142e-05, 0.1268878884308696, 0.12432346740907979]).reshape((3,1))
+    # translation_side_to_top = np.array([9.336674963296142e-05, 0.1268878884308696, 0.12432346740907979]).reshape((3,1))
+    translation_side_to_top = np.array([-0.00405898148084166, 0.12556883059577384, 0.12740889645198586]).reshape((3,1))
 
-    rotation_side_to_top = np.array( [0.997701828954437, -0.03188640457921707, -0.0597855977973143,
-                                      -0.058907963785628806, 0.027788165175257316, -0.9978765803839791,
-                                      0.03348002842894244, 0.9991051371498414, 0.025845940052435786]).reshape((3,3))
+    # rotation_side_to_top = np.array( [0.997701828954437, -0.03188640457921707, -0.0597855977973143,
+    #                                   -0.058907963785628806, 0.027788165175257316, -0.9978765803839791,
+    #                                   0.03348002842894244, 0.9991051371498414, 0.025845940052435786]).reshape((3,3))
+
+    rotation_side_to_top = np.array([0.9944425578466023, -0.07751605003550875, -0.07124086699640379,
+                                     -0.07012885032973017, 0.01697791409053453, -0.9973934503417218,
+                                     0.07852352192137778, 0.996846534036221, 0.011447448843998962]).reshape((3, 3))
 
     transform_side_to_top = make_homogeneous_tform(rotation=rotation_side_to_top, translation=translation_side_to_top)
     transform_top_to_side = np.linalg.inv(transform_side_to_top)
-    print("top to side")
-    print(transform_top_to_side)
+    # print("top to side")
+    # print(transform_top_to_side)
 
     print("side to top")
     print(transform_side_to_top)
 
     p1_side = np.dot(mat_left, np.concatenate((np.eye(3), np.zeros((3,1))), axis=1))
+    # p1_side = np.array([651.2401417664485, 0.0, 313.8361587524414, 0.0, 0.0, 651.2401417664485, 204.06911087036133, 0.0, 0.0, 0.0, 1.0, 0.0]).reshape((3,4))
     p2_top = np.dot(mat_right, transform_side_to_top[0:3,:])
+    # p2_top = np.array([651.2401417664485, 0.0, 313.8361587524414, 0.0, 0.0, 651.2401417664485, 204.06911087036133, 116.52837949973384, 0.0, 0.0, 1.0, 0.0]).reshape((3,4))
+
 
     top_frames = deque(maxlen=3)
     side_frames = deque(maxlen=3)

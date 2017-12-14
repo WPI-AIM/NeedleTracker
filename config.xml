@@ -2,7 +2,7 @@
 <data>
 	<ip>192.168.0.100</ip>
 	<port>18944</port>
-	<output_dir>./data/Trial1/</output_dir>
+	<output_dir>./data/Trial2/</output_dir>
 	<prefix>insertion</prefix>
 	<calibration_file>calibration.npz</calibration_file>
 
@@ -34,7 +34,7 @@
 	<kernel_top>5</kernel_top>
 	<kernel_side>5</kernel_side>
 
-	<threshold_mag>3</threshold_mag>
+	<threshold_mag>4</threshold_mag>
 
 	<dof_top>
 		<pyr_scale>0.5</pyr_scale>

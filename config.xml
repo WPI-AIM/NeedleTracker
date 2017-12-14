@@ -34,7 +34,8 @@
 	<kernel_top>5</kernel_top>
 	<kernel_side>5</kernel_side>
 
-	<threshold_mag>5</threshold_mag>
+	<threshold_mag_lower>5</threshold_mag_lower>
+	<threshold_mag_upper>20</threshold_mag_upper>
 
 	<dof_top>
 		<pyr_scale>0.5</pyr_scale>

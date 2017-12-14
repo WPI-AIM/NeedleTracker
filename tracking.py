@@ -5,7 +5,8 @@ from collections import deque
 
 class TipTracker:
     def __init__(self, params, image_width, image_height, heading_expected,
-                 heading_range, threshold_mag, roi_center_initial, roi_size, kernel_size, name="camera", verbose=False):
+                 heading_range, threshold_mag_lower, threshold_mag_upper, roi_center_initial,
+                 roi_size, kernel_size, name="camera", verbose=False):
 
         self.flow_params = params
         self.heading = heading_expected
@@ -19,7 +20,8 @@ class TipTracker:
         self.name = name
         self.kernel_size = kernel_size
         self.verbose = verbose
-        self.threshold_mag = threshold_mag
+        self.threshold_mag_lower = threshold_mag_lower
+        self.threshold_mag_upper = threshold_mag_upper
 
         self.heading_insert_bound_lower = (self.heading - (self.heading_range / 2))%180
         self.heading_insert_bound_upper = (self.heading + (self.heading_range / 2))%180
@@ -77,16 +79,14 @@ class TipTracker:
         hsv[..., 2] = flow_mag
 
         hsv_rescaled = hsv.copy()
-        hsv_rescaled[..., 2] = np.clip(hsv_rescaled[..., 2]*(120/self.threshold_mag), 0, 255)
+        hsv_rescaled[..., 2] = np.clip(hsv_rescaled[..., 2] * (120 / self.threshold_mag_lower), 0, 255)
         bgr = cv2.cvtColor(np.array(hsv_rescaled, dtype=np.uint8), cv2.COLOR_HSV2BGR)
         # print(np.max(flow_magnitude), np.std(flow_magnitude), np.mean(flow_magnitude))
         return hsv, bgr
 
     def _filter_by_heading(self, flow_hsv):
-        max_value = 20
-
-        flow_hsv_insert_bound_lower = np.array([self.heading_insert_bound_lower, 50, self.threshold_mag])
-        flow_hsv_insert_bound_upper = np.array([self.heading_insert_bound_upper, 255, max_value])
+        flow_hsv_insert_bound_lower = np.array([self.heading_insert_bound_lower, 50, self.threshold_mag_lower])
+        flow_hsv_insert_bound_upper = np.array([self.heading_insert_bound_upper, 255, self.threshold_mag_upper])
 
         mask = cv2.inRange(flow_hsv, flow_hsv_insert_bound_lower, flow_hsv_insert_bound_upper)
 

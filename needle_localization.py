@@ -332,33 +332,33 @@ def main():
                                                 p2_top)
 
 
-    time_start = time.clock()
+    time_start = time.time()
 
     while cap_top.isOpened():
         try:
-            time_last = time.clock()
+            time_last = time.time()
 
+            _, camera_top_current_frame = cap_top.read()
+            _, camera_side_current_frame = cap_side.read()
+
+            input = cv2.waitKey(1)
+            if input == ord('q') or camera_top_current_frame is None or camera_side_current_frame is None:
+                break
+            elif input == ord('a'):
+
+                # Toggle target status
+                TARGET_SET = not TARGET_SET
             output_string = ""
 
             times = []
 
-            timestamps.append(time.clock() - time_start)
-
             if arduino is not None:
                 arduino.write('1\n')
 
-            _, camera_top_current_frame = cap_top.read()
-            _, camera_side_current_frame = cap_side.read()
             # ret, aux_frame = cap_aux.read()
             aux_frame = None
 
-            input = cv2.waitKey(1)
-
-            if input == ord('q') or camera_top_current_frame is None or camera_side_current_frame is None:
-                break
-            elif input == ord('a'):
-                # Toggle target status
-                TARGET_SET = not TARGET_SET
+            timestamps.append(time.time() - time_start)
 
             top_frames.append(camera_top_current_frame)
             side_frames.append(camera_side_current_frame)
@@ -368,8 +368,8 @@ def main():
             MANUAL_ROI_TOP_SET = False
             MANUAL_ROI_SIDE_SET = False
 
-            time_delta = time.clock() - time_last
-            time_last = time.clock()
+            time_delta = time.time() - time_last
+            time_last = time.time()
             times.append(time_delta)
             output_string += "2D Localization: " + str(time_delta) + "\n"
 
@@ -427,8 +427,8 @@ def main():
                 else:
                     TARGET_SET = False
 
-            time_delta = time.clock() - time_last
-            time_last = time.clock()
+            time_delta = time.time() - time_last
+            time_last = time.time()
             times.append(time_delta)
             output_string += "Triangulation/Refraction: " + str(time_delta) + "\n"
 
@@ -485,17 +485,17 @@ def main():
 
                 output_string += "Reg Marker to Tip\n" + str(transform_registration_marker_to_tip) + "\n"
 
-                position_tip_time = np.concatenate(([[time.clock()]], position_tip_corrected.reshape((3,1))))
-                position_tip_uncorrected_time = np.concatenate(([[time.clock()]], position_tip.reshape((3, 1))))
+                position_tip_time = np.concatenate(([[time.time()]], position_tip_corrected.reshape((3,1))))
+                position_tip_uncorrected_time = np.concatenate(([[time.time()]], position_tip.reshape((3, 1))))
 
                 trajectory_corrected.append(position_tip_time)
                 target_corrected.append(position_target_corrected)
                 trajectory_uncorrected.append(position_tip_uncorrected_time)
                 transforms_registration_marker_to_tip.append(transform_registration_marker_to_tip)
             else:
-                trajectory_corrected.append(np.array([time.clock(), 0, 0, 0]).reshape((4,1)))
+                trajectory_corrected.append(np.array([time.time(), 0, 0, 0]).reshape((4,1)))
                 target_corrected.append(position_target_corrected)
-                trajectory_uncorrected.append(np.array([time.clock(), 0, 0, 0]).reshape((4,1)))
+                trajectory_uncorrected.append(np.array([time.time(), 0, 0, 0]).reshape((4,1)))
                 transforms_registration_marker_to_tip.append(np.eye(4))
 
             top_path.append(tracker_top.position_tip)
@@ -509,8 +509,8 @@ def main():
             camera_side_with_marker = draw_tip_path(camera_side_with_marker,
                                                     side_path)
 
-            time_delta = time.clock() - time_last
-            time_last = time.clock()
+            time_delta = time.time() - time_last
+            time_last = time.time()
             times.append(time_delta)
             # print("Comms: " + str(time_delta))
             output_string += "Comms: " + str(time_delta) + "\n"
@@ -522,8 +522,8 @@ def main():
             cv2.putText(camera_top_with_marker, "Top", (5,20), font, 0.5, text_color)
             cv2.putText(camera_side_with_marker, "Side", (5,20), font, 0.5, text_color)
 
-            time_delta = time.clock() - time_last
-            time_last = time.clock()
+            time_delta = time.time() - time_last
+            time_last = time.time()
             times.append(time_delta)
             output_string += "Total: " + str(sum(times)) + "\n"
 
@@ -552,7 +552,7 @@ def main():
             delta_last = delta
             position_tip_last = position_tip_corrected
 
-            time_delta = time.clock() - time_last
+            time_delta = time.time() - time_last
             times.append(time_delta)
 
             output_string += "Diagnostics: " + str(time_delta) + "\n"
@@ -578,11 +578,9 @@ def main():
     trajectory_array_corrected = np.array(trajectory_corrected)
     target_array = np.array(target_corrected)
 
-    print(trajectory_array_corrected.shape)
-    print(target_array.shape)
-    combined_array =np.concatenate((trajectory_array_corrected, target_array),1)
+    # print(trajectory_array_corrected.shape)
+    # print(target_array.shape)
 
-    np.savetxt(output_path + "/trajectory.csv", combined_array, delimiter=",")
     np.savetxt(output_path + "/trajectory2d.csv", np.concatenate((top_path, side_path), axis=1), delimiter=",")
     np.savez_compressed(output_path + "/trajectory.npz",
                         trajectory_tip=trajectory_array_corrected,
@@ -592,6 +590,12 @@ def main():
                         transforms_registration_marker_to_tip=np.array(transforms_registration_marker_to_tip),
                         transforms_registration_marker_to_target=np.array(transforms_registration_marker_to_target),
                         timestamps=np.array(timestamps))
+
+    # combined_array =np.concatenate((trajectory_array_corrected, target_array),1)
+    print(np.array(timestamps).reshape((-1,1)).shape)
+    print(np.array(transforms_registration_marker_to_tip)[:,0:3,3].shape)
+    print(np.array(transforms_registration_marker_to_target)[:,0:3,3].shape)
+    np.savetxt(output_path + "/trajectory.csv", np.concatenate((np.array(timestamps).reshape((-1,1)), np.array(transforms_registration_marker_to_tip)[:,0:3,3], np.array(transforms_registration_marker_to_target)[:,0:3,3]), axis=1), delimiter=",")
 
 class Struct:
     def __init__(self, **entries):

@@ -203,3 +203,29 @@ class TargetTracker:
                 cx = int(M['m10'] / M['m00'])
                 cy = int(M['m01'] / M['m00'])
                 self.target_coords = (cx, cy)
+
+class PhantomTracker:
+    def __init__(self, board, dictionary, mat_camera, dist_camera, corner_points):
+        self.board = board
+        self.dictionary = dictionary
+        self.mat_camera = mat_camera
+        self.dist_camera = dist_camera
+        self.corner_points = corner_points
+        self.transform_homogeneous = None
+
+    def update(self, image):
+        markerCorners, markerIds, _ = cv2.aruco.detectMarkers(image=image, dictionary=self.dictionary)
+        if markerIds is not None:
+            ret, rvec, tvec = cv2.aruco.estimatePoseBoard(corners=markerCorners, ids=markerIds, board=self.board, cameraMatrix=self.mat_camera, distCoeffs=self.dist_camera)
+            if ret:
+                rmat, _ = cv2.Rodrigues(np.array(rvec, dtype=np.float32))
+                self.transform_homogeneous = np.concatenate(
+                    (np.concatenate((rmat, tvec), axis=1), np.array([[0, 0, 0, 1]])), axis=0)
+
+    def get_phantom_corner_points(self):
+        return None
+
+    def draw_phantom_axes(self, image):
+        return cv2.aruco.drawAxis(image=image, cameraMatrix=self.mat_camera, distCoeffs=self.dist_camera, rvec=self.transform_homogeneous[0:3,0:3],
+                                        tvec=self.transform_homogeneous[0:3,3], length=0.03)
+

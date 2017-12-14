@@ -156,6 +156,8 @@ def main():
 
     mat_left_obj = Struct(**cal_left.camera_matrix)
     mat_left = np.reshape(np.array(mat_left_obj.data),(mat_left_obj.rows,mat_left_obj.cols))
+    dist_left_obj = Struct(**cal_left.distortion_coefficients)
+    dist_left = np.reshape(np.array(dist_left_obj.data), (dist_left_obj.rows, dist_left_obj.cols))
 
     mat_right_obj = Struct(**cal_right.camera_matrix)
     mat_right = np.reshape(np.array(mat_right_obj.data),(mat_right_obj.rows,mat_right_obj.cols))
@@ -339,6 +341,11 @@ def main():
     triangulator_target = tracking.Triangulator(p1_side,
                                                 p2_top)
 
+    phantom_board_data = np.load("./data/phantom_board.npz")
+    dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
+    board = cv2.aruco.Board_create(objPoints=phantom_board_data['obj_points'], dictionary=dictionary, ids=phantom_board_data['ids'])
+    tracker_phantom = tracking.PhantomTracker(board, dictionary, mat_left, dist_left, corner_points=None)
+
 
     time_start = time.time()
 
@@ -375,6 +382,8 @@ def main():
             tracker_top.update(top_frames, MANUAL_ROI_TOP_SET, ROI_CENTER_MANUAL_TOP)
             MANUAL_ROI_TOP_SET = False
             MANUAL_ROI_SIDE_SET = False
+
+            tracker_phantom.update(camera_side_current_frame)
 
             time_delta = time.time() - time_last
             time_last = time.time()
@@ -516,6 +525,8 @@ def main():
                                                    top_path)
             camera_side_with_marker = draw_tip_path(camera_side_with_marker,
                                                     side_path)
+
+            camera_side_with_marker = tracker_phantom.draw_phantom_axes(camera_side_with_marker)
 
             time_delta = time.time() - time_last
             time_last = time.time()

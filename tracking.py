@@ -73,7 +73,10 @@ class TipTracker:
         hsv[..., 0] = ((flow_angle+90)%360 * (180 / np.pi)) * 0.5
         hsv[..., 2] = flow_magnitude
 
-        bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+        hsv_rescaled = hsv.copy()
+        hsv_rescaled[..., 2] = np.clip(hsv_rescaled[..., 2]*int(120/self.threshold_mag), 0, 255)
+
+        bgr = cv2.cvtColor(hsv_rescaled, cv2.COLOR_HSV2BGR)
         # print(np.max(flow_magnitude), np.std(flow_magnitude), np.mean(flow_magnitude))
         return hsv, bgr, flow_magnitude
 

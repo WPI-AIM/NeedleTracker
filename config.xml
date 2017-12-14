@@ -10,6 +10,8 @@
 	<index_camera_side>2</index_camera_side>
 	<index_camera_aux>3</index_camera_aux>
 
+	<frame_deque_size>3</frame_deque_size>
+
 	<hue_motion>135</hue_motion>
 	<hue_motion_range>20</hue_motion_range>
 

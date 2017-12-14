@@ -156,9 +156,13 @@ def main():
 
     mat_left_obj = Struct(**cal_left.camera_matrix)
     mat_left = np.reshape(np.array(mat_left_obj.data),(mat_left_obj.rows,mat_left_obj.cols))
+    dist_left_obj = Struct(**cal_left.distortion_coefficients)
+    dist_left = np.reshape(np.array(dist_left_obj.data), (dist_left_obj.rows, dist_left_obj.cols))
 
     mat_right_obj = Struct(**cal_right.camera_matrix)
     mat_right = np.reshape(np.array(mat_right_obj.data),(mat_right_obj.rows,mat_right_obj.cols))
+    dist_right_obj = Struct(**cal_right.distortion_coefficients)
+    dist_right = np.reshape(np.array(dist_right_obj.data), (dist_right_obj.rows, dist_right_obj.cols))
 
     # translation_side_to_top = np.array([9.336674963296142e-05, 0.1268878884308696, 0.12432346740907979]).reshape((3,1))
     translation_side_to_top = np.array([-0.00405898148084166, 0.12556883059577384, 0.12740889645198586]).reshape((3,1))
@@ -423,6 +427,8 @@ def main():
             success_compensation_target, position_target_corrected_list = compensator_target.solve_real_point_from_refracted(np.ravel(position_target))
             position_tip_corrected = position_tip_corrected_list
 
+            position_tip_corrected = position_tip
+
             position_target_corrected = position_target
             if success_compensation_target:
                 position_target_corrected = np.array([position_target_corrected_list[0], position_target_corrected_list[1], position_target_corrected_list[2]]).reshape((3,1))
@@ -506,6 +512,7 @@ def main():
                 trajectory_corrected.append(np.array([time.time(), 0, 0, 0]).reshape((4,1)))
                 target_corrected.append(position_target_corrected)
                 trajectory_uncorrected.append(np.array([time.time(), 0, 0, 0]).reshape((4,1)))
+                transform_camera_to_tip = np.eye(4)
                 transforms_registration_marker_to_tip.append(np.eye(4))
 
             top_path.append(tracker_top.position_tip)
@@ -518,6 +525,18 @@ def main():
                                                    top_path)
             camera_side_with_marker = draw_tip_path(camera_side_with_marker,
                                                     side_path)
+
+            tip_reprojected_side, _ = cv2.projectPoints(np.array([transform_camera_to_tip[0:3,3]]).astype(np.float32),
+                                                        np.eye(3), np.zeros((3,1)), mat_left, dist_left)
+            camera_side_with_marker = draw_marker(camera_side_with_marker,
+                                                  tip_reprojected_side.astype(np.int32).ravel(), (255,255,255), 7)
+
+            tip_reprojected_top, _ = cv2.projectPoints(np.array([transform_camera_to_tip[0:3, 3]]).astype(np.float32),
+                                                        rotation_side_to_top, translation_side_to_top, mat_right, dist_right)
+            camera_top_with_marker = draw_marker(camera_top_with_marker,
+                                                  tip_reprojected_top.astype(np.int32).ravel(), (255, 255, 255), 7)
+
+            print(tip_reprojected_top, tip_reprojected_side)
 
             time_delta = time.time() - time_last
             time_last = time.time()
@@ -670,6 +689,11 @@ def draw_target_markers(image, target_coords_a, target_coords_b):
     output = image.copy()
     cv2.circle(output, target_coords_a, 10, (0, 255, 0))
     cv2.circle(output, target_coords_b, 10, (255, 0, 255))
+    return output
+
+def draw_marker(image, coords, color, diameter):
+    output = image.copy()
+    cv2.circle(output, (coords[0], coords[1]), diameter, color)
     return output
 
 def get_coords(event, x, y, flags, param):

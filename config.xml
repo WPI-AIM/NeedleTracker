@@ -30,7 +30,7 @@
 	<camera_side_contrast>200</camera_side_contrast>
 	<camera_side_brightness>180</camera_side_brightness>
 
-	<roi_width>100</roi_width>
+	<roi_width>150</roi_width>
 	<roi_height>50</roi_height>
 
 	<kernel_top>5</kernel_top>

@@ -45,10 +45,8 @@ class TipTracker:
     def _get_dense_flow(self, image_past, image_current):
         image_past_gray = cv2.cvtColor(image_past, cv2.COLOR_BGR2GRAY)
         image_current_gray = cv2.cvtColor(image_current, cv2.COLOR_BGR2GRAY)
-        # cv2.imshow(self.name+"_gray",image_current_gray)
 
         self.image_current_gray_thresh = cv2.inRange(image_current_gray, 0, 100)
-        # cv2.imshow(self.name+"_thresh", image_past_gray_thresh)
 
         if self.flow_previous is None:
             flow = cv2.calcOpticalFlowFarneback(image_past_gray,
@@ -67,13 +65,15 @@ class TipTracker:
         self.flow_previous = flow
         flow_magnitude, flow_angle = cv2.cartToPolar(flow[..., 0], flow[..., 1])
 
-        hsv = np.zeros_like(image_current)
+        hsv = np.zeros_like(image_current, dtype=np.float32)
         hsv[..., 1] = 255
 
-        hsv[..., 0] = ((flow_angle+90)%360 * (180 / np.pi)) * 0.5
+        hsv[..., 0] = ((flow_angle+(np.pi/2))%(2*np.pi) * (180 / np.pi)) * 0.5
         hsv[..., 2] = flow_magnitude
 
-        bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+        hsv_rescaled = hsv.copy()
+        hsv_rescaled[..., 2] = np.clip(hsv_rescaled[..., 2]*(120/self.threshold_mag), 0, 255)
+        bgr = cv2.cvtColor(np.array(hsv_rescaled, dtype=np.uint8), cv2.COLOR_HSV2BGR)
         # print(np.max(flow_magnitude), np.std(flow_magnitude), np.mean(flow_magnitude))
         return hsv, bgr, flow_magnitude
 
@@ -83,14 +83,7 @@ class TipTracker:
         flow_hsv_insert_bound_lower = np.array([self.heading_insert_bound_lower, 50, self.threshold_mag])
         flow_hsv_insert_bound_upper = np.array([self.heading_insert_bound_upper, 255, max_value])
 
-        mask_insert = cv2.inRange(flow_hsv, flow_hsv_insert_bound_lower, flow_hsv_insert_bound_upper)
-
-        flow_hsv_retract_bound_lower = np.array([self.heading_retract_bound_lower, 50, self.threshold_mag])
-        flow_hsv_retract_bound_upper = np.array([self.heading_retract_bound_upper, 255, max_value])
-
-        mask_retract = cv2.inRange(flow_hsv, flow_hsv_retract_bound_lower, flow_hsv_retract_bound_upper)
-
-        mask = cv2.bitwise_or(mask_insert, mask_retract)
+        mask = cv2.inRange(flow_hsv, flow_hsv_insert_bound_lower, flow_hsv_insert_bound_upper)
 
         kernel = np.ones((self.kernel_size, self.kernel_size), np.uint8)
         erosion = cv2.erode(mask, kernel, iterations=1)

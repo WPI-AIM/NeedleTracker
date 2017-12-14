@@ -527,10 +527,10 @@ def main():
             camera_side_with_marker = draw_tip_path(camera_side_with_marker,
                                                     side_path)
 
-            camera_side_with_marker = tracker_phantom.draw_phantom_axes(camera_side_with_marker)
+            # camera_side_with_marker = tracker_phantom.draw_phantom_axes(camera_side_with_marker)
 
             # camera_side_with_marker = tracker_phantom.draw_phantom_corners(camera_side_with_marker)
-            tracker_phantom.get_phantom_mask(camera_side_with_marker.shape)
+            # tracker_phantom.get_phantom_mask(camera_side_with_marker.shape)
 
             time_delta = time.time() - time_last
             time_last = time.time()

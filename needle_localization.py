@@ -185,8 +185,8 @@ def main():
     # p2_top = np.array([651.2401417664485, 0.0, 313.8361587524414, 0.0, 0.0, 651.2401417664485, 204.06911087036133, 116.52837949973384, 0.0, 0.0, 1.0, 0.0]).reshape((3,4))
 
 
-    top_frames = deque(maxlen=3)
-    side_frames = deque(maxlen=3)
+    top_frames = deque(maxlen=int(root.find("frame_deque_size").text))
+    side_frames = deque(maxlen=int(root.find("frame_deque_size").text))
 
     transforms_tip = deque(maxlen=2)
 
@@ -277,7 +277,8 @@ def main():
                                       camera_top_height,
                                       hue_motion,
                                       hue_motion_range,
-                                      int(root.find("threshold_mag").text),
+                                      int(root.find("threshold_mag_lower").text),
+                                      int(root.find("threshold_mag_upper").text),
                                       camera_top_roi_center,
                                       camera_top_roi_size,
                                       int(root.find("kernel_top").text),
@@ -288,7 +289,8 @@ def main():
                                        camera_side_height,
                                        hue_motion,
                                        hue_motion_range,
-                                       int(root.find("threshold_mag").text),
+                                       int(root.find("threshold_mag_lower").text),
+                                       int(root.find("threshold_mag_upper").text),
                                        camera_side_roi_center,
                                        camera_side_roi_size,
                                        int(root.find("kernel_side").text),

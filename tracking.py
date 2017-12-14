@@ -83,7 +83,7 @@ class TipTracker:
         return hsv, bgr
 
     def _filter_by_heading(self, flow_hsv):
-        max_value = 255
+        max_value = 20
 
         flow_hsv_insert_bound_lower = np.array([self.heading_insert_bound_lower, 50, self.threshold_mag])
         flow_hsv_insert_bound_upper = np.array([self.heading_insert_bound_upper, 255, max_value])

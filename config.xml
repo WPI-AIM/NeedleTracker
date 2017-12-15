@@ -3,8 +3,8 @@
 	<ip>192.168.0.100</ip>
 	<port>18944</port>
 
-	<output_dir>./data/Trial6/</output_dir>
-	<prefix>insertion</prefix>
+	<output_dir>./data/</output_dir>
+	<prefix>debug</prefix>
 	<calibration_file>calibration.npz</calibration_file>
 
 	<index_camera_top>1</index_camera_top>
@@ -59,4 +59,6 @@
 
 	<index_refraction_phantom>1.5</index_refraction_phantom>
 	<index_refraction_ambient>1.0</index_refraction_ambient>
+
+	<target_shift_magnitude>0.005</target_shift_magnitude>
 </data>

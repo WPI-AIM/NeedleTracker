@@ -31,7 +31,9 @@ top_right = [length_phantom_px - width_marker_px, 0, 0]
 bottom_left = [0, height_phantom_px - width_marker_px, 0]
 bottom_right = [length_phantom_px - width_marker_px, height_phantom_px - width_marker_px, 0]
 
-phantom_center_to_grid_origin = np.array([-length_phantom/2, -height_phantom/2, height_phantom/2])
+phantom_center_to_grid_origin = np.array([-length_phantom/2, -height_phantom/2 + 0.0035, height_phantom/2])
+# phantom_center_to_grid_origin = np.array([0, 0.0035, 0])
+
 
 points_corners_list = []
 for coord_x in np.linspace(0, length_phantom - width_marker, markers_x_count, endpoint=True):

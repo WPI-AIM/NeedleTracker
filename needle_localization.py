@@ -151,52 +151,53 @@ def main():
     print("Reg Marker Tform Loaded:")
     print(transform_camera_to_registration_marker)
 
-    cal_left = Struct(**yaml.load(file('left.yaml','r')))
-    cal_right = Struct(**yaml.load(file('right.yaml', 'r')))
+    cal_top = Struct(**yaml.load(file('right.yaml','r')))
+    cal_side = Struct(**yaml.load(file('left.yaml', 'r')))
 
-    mat_left_obj = Struct(**cal_left.camera_matrix)
-    mat_left = np.reshape(np.array(mat_left_obj.data),(mat_left_obj.rows,mat_left_obj.cols))
-    dist_left_obj = Struct(**cal_left.distortion_coefficients)
-    dist_left = np.reshape(np.array(dist_left_obj.data), (dist_left_obj.rows, dist_left_obj.cols))
+    mat_side_obj = Struct(**cal_side.camera_matrix)
+    mat_side = np.reshape(np.array(mat_side_obj.data),(mat_side_obj.rows,mat_side_obj.cols))
+    dist_side_obj = Struct(**cal_side.distortion_coefficients)
+    dist_side = np.reshape(np.array(dist_side_obj.data), (dist_side_obj.rows, dist_side_obj.cols))
 
-    mat_right_obj = Struct(**cal_right.camera_matrix)
-    mat_right = np.reshape(np.array(mat_right_obj.data),(mat_right_obj.rows,mat_right_obj.cols))
-    dist_right_obj = Struct(**cal_right.distortion_coefficients)
-    dist_right = np.reshape(np.array(dist_right_obj.data), (dist_right_obj.rows, dist_right_obj.cols))
+    mat_top_obj = Struct(**cal_top.camera_matrix)
+    mat_top = np.reshape(np.array(mat_top_obj.data),(mat_top_obj.rows,mat_top_obj.cols))
+    dist_top_obj = Struct(**cal_top.distortion_coefficients)
+    dist_top = np.reshape(np.array(dist_top_obj.data), (dist_top_obj.rows, dist_top_obj.cols))
 
     # translation_side_to_top = np.array([9.336674963296142e-05, 0.1268878884308696, 0.12432346740907979]).reshape((3,1))
-    translation_side_to_top = np.array([-0.017468984298953893, 0.14676038110942088, 0.14458964190901735]).reshape((3,1))
+    translation_side_to_top = np.array([-0.018529810772533552, 0.1489074394620274, 0.14473413752153652]).reshape((3,1))
 
     # rotation_side_to_top = np.array( [0.997701828954437, -0.03188640457921707, -0.0597855977973143,
     #                                   -0.058907963785628806, 0.027788165175257316, -0.9978765803839791,
     #                                   0.03348002842894244, 0.9991051371498414, 0.025845940052435786]).reshape((3,3))
 
-    rotation_side_to_top = np.array([0.9919471795154419, -0.09749863540124734, -0.08083816639591992,
-                                     -0.07864663874423747, 0.026121328482080326, -0.9965602753534604,
-                                     0.09927486724037057, 0.9948928044232836, 0.018243038156537935]).reshape((3, 3))
+    rotation_side_to_top = np.array([0.9953755298719801, -0.07684465624922898, -0.057640726383455354, -0.05398387697357635, 0.048845821669183664, -0.9973463925499324, 0.07945624933871662, 0.9958458638320491, 0.0444715631569608]).reshape((3, 3))
+
 
     transform_side_to_top = make_homogeneous_tform(rotation=rotation_side_to_top, translation=translation_side_to_top)
     transform_top_to_side = np.linalg.inv(transform_side_to_top)
-    # print("top to side")
-    # print(transform_top_to_side)
+    # rotation_side_to_top = transform_side_to_top[0:3,0:3]
+    # translation_side_to_top = transform_side_to_top[0:3,3]
+    print("top to side")
+    print(transform_top_to_side)
 
     print("side to top")
     print(transform_side_to_top)
 
     # p1_side_obj = Struct(**cal_left.projection_matrix)
     # p1_side = np.reshape(np.array(p1_side_obj.data), (p1_side_obj.rows, p1_side_obj.cols))
-    p1_side = np.dot(mat_left, np.concatenate((np.eye(3), np.zeros((3,1))), axis=1))
+    p1_side = np.dot(mat_side, np.concatenate((np.eye(3), np.zeros((3,1))), axis=1))
     # p1_side = np.array([651.2401417664485, 0.0, 313.8361587524414, 0.0, 0.0, 651.2401417664485, 204.06911087036133, 0.0, 0.0, 0.0, 1.0, 0.0]).reshape((3,4))
 
     # p2_top_obj = Struct(**cal_right.projection_matrix)
     # p2_top = np.reshape(np.array(p2_top_obj.data), (p2_top_obj.rows, p2_top_obj.cols))
-    p2_top = np.dot(mat_right, transform_side_to_top[0:3,:])
+    p2_top = np.dot(mat_top, transform_side_to_top[0:3,:])
     # p2_top = np.array([651.2401417664485, 0.0, 313.8361587524414, 0.0, 0.0, 651.2401417664485, 204.06911087036133, 116.52837949973384, 0.0, 0.0, 1.0, 0.0]).reshape((3,4))
 
     top_frames = deque(maxlen=int(root.find("frame_deque_size").text))
     side_frames = deque(maxlen=int(root.find("frame_deque_size").text))
 
-    transforms_tip = deque(maxlen=2)
+    transforms_tip = deque(maxlen=10)
 
     _, camera_top_last_frame = cap_top.read()
     _, camera_side_last_frame = cap_side.read()
@@ -215,7 +216,6 @@ def main():
     camera_top_roi_center = (int(camera_top_width * 0.8), camera_top_height / 2)
     camera_side_roi_center = (int(camera_side_width * 0.8), camera_side_height / 2)
 
-    delta_last = None
     position_tip_last = None
 
     trajectory_corrected = []
@@ -313,14 +313,12 @@ def main():
     compensator_tip = refraction.RefractionModeler(camera_a_origin,
                                                    camera_b_origin,
                                                    phantom_dims,
-                                                   transform_camera_to_phantom,
                                                    float(root.find("index_refraction_phantom").text),
                                                    float(root.find("index_refraction_ambient").text))
 
     compensator_target = refraction.RefractionModeler(camera_a_origin,
                                                       camera_b_origin,
                                                       phantom_dims,
-                                                      transform_camera_to_phantom,
                                                       float(root.find("index_refraction_phantom").text),
                                                       float(root.find("index_refraction_ambient").text))
 
@@ -348,6 +346,11 @@ def main():
 
     triangulator_target = tracking.Triangulator(p1_side,
                                                 p2_top)
+
+    phantom_board_data = np.load("./data/phantom_board.npz")
+    dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
+    board = cv2.aruco.Board_create(objPoints=phantom_board_data['obj_points'], dictionary=dictionary, ids=phantom_board_data['ids'])
+    tracker_phantom = tracking.PhantomTracker(board, dictionary, dims_phantom=phantom_dims)
 
 
     time_start = time.time()
@@ -385,6 +388,9 @@ def main():
             tracker_top.update(top_frames, MANUAL_ROI_TOP_SET, ROI_CENTER_MANUAL_TOP)
             MANUAL_ROI_TOP_SET = False
             MANUAL_ROI_SIDE_SET = False
+
+            tracker_phantom.update(camera_side_current_frame, mat_side, dist_side)
+            # tracker_phantom.get_phantom_corner_image_points()
 
             time_delta = time.time() - time_last
             time_last = time.time()
@@ -427,8 +433,8 @@ def main():
             # position_target_second = triangulator_target.get_position_3D(TARGET_TOP_B,
             #                                                              TARGET_SIDE_B)
 
-            success_compensation_tip, position_tip_corrected_list = compensator_tip.solve_real_point_from_refracted(np.ravel(position_tip))
-            success_compensation_target, position_target_corrected_list = compensator_target.solve_real_point_from_refracted(np.ravel(position_target))
+            success_compensation_tip, position_tip_corrected_list = compensator_tip.solve_real_point_from_refracted(np.ravel(position_tip), tracker_phantom.transform_camera_to_phantom)
+            success_compensation_target, position_target_corrected_list = compensator_target.solve_real_point_from_refracted(np.ravel(position_target), tracker_phantom.transform_camera_to_phantom)
             position_tip_corrected = position_tip_corrected_list
 
             position_tip_corrected = position_tip
@@ -488,7 +494,7 @@ def main():
                                          [0, 0.01, 0.99]])
                 if len(transforms_tip) is not 0:
                     direction_motion = normalize(
-                        position_tip_corrected.reshape((3, 1)) - transforms_tip[-1][0:3, 3].reshape((3, 1)))
+                        position_tip_corrected.reshape((3, 1)) - transforms_tip[0][0:3, 3].reshape((3, 1)))
                     axis_y = np.array([0, 1, 0]).reshape((1,3))
                     axis_z = normalize(np.cross(direction_motion.reshape((1,3)), axis_y).reshape((1,3)))
                     axis_y = normalize(np.cross(axis_z.reshape((1,3)), direction_motion.reshape((1,3))))
@@ -530,25 +536,34 @@ def main():
             camera_side_with_marker = draw_tip_path(camera_side_with_marker,
                                                     side_path)
 
+            # camera_side_with_marker = tracker_phantom.draw_phantom_axes(camera_side_with_marker)
+            camera_top_with_marker = tracker_phantom.draw_phantom_corners(camera_top_with_marker, mat_top, dist_top, rvec_camera=rotation_side_to_top, tvec_camera=translation_side_to_top)
+
+            camera_side_with_marker = tracker_phantom.draw_phantom_corners(camera_side_with_marker, mat_side, dist_side)
+            # tracker_phantom.get_phantom_mask(camera_side_with_marker.shape)
+            camera_side_with_marker = tracker_phantom.draw_phantom_axes(camera_side_with_marker, mat_side, dist_side)
+
             tip_reprojected_side, _ = cv2.projectPoints(np.array([transform_camera_to_tip[0:3,3]]).astype(np.float32),
-                                                        np.eye(3), np.zeros((3,1)), mat_left, dist_left)
+                                                        np.eye(3), np.zeros((3,1)), mat_side, dist_side)
             camera_side_with_marker = draw_marker(camera_side_with_marker,
                                                   tip_reprojected_side.astype(np.int32).ravel(), (255,255,255), 7)
 
             tip_reprojected_top, _ = cv2.projectPoints(np.array([transform_camera_to_tip[0:3, 3]]).astype(np.float32),
-                                                        rotation_side_to_top, translation_side_to_top, mat_right, dist_right)
+                                                        rotation_side_to_top, translation_side_to_top, mat_top, dist_top)
             camera_top_with_marker = draw_marker(camera_top_with_marker,
                                                   tip_reprojected_top.astype(np.int32).ravel(), (255, 255, 255), 7)
+
+            camera_side_with_marker = draw_axes(transform_camera_to_tip, camera_side_with_marker, mat_side, dist_side)
 
 
 
             target_reprojected_side, _ = cv2.projectPoints(np.array([transform_camera_to_target[0:3,3]]).astype(np.float32),
-                                                        np.eye(3), np.zeros((3,1)), mat_left, dist_left)
+                                                        np.eye(3), np.zeros((3,1)), mat_side, dist_side)
             camera_side_with_marker = draw_marker(camera_side_with_marker,
                                                   target_reprojected_side.astype(np.int32).ravel(), (255,255,255), 7)
 
             target_reprojected_top, _ = cv2.projectPoints(np.array([transform_camera_to_target[0:3, 3]]).astype(np.float32),
-                                                        rotation_side_to_top, translation_side_to_top, mat_right, dist_right)
+                                                        rotation_side_to_top, translation_side_to_top, mat_top, dist_top)
             camera_top_with_marker = draw_marker(camera_top_with_marker,
                                                  target_reprojected_top.astype(np.int32).ravel(), (255, 255, 255), 7)
 
@@ -683,6 +698,15 @@ class Struct:
 #
 #         self.fig.canvas.flush_events()
 #         # time.sleep(1)
+
+def draw_axes(transform, source, mat_camera, dist_camera):
+    image = source.copy()
+    return cv2.aruco.drawAxis(image=image,
+                              cameraMatrix=mat_camera,
+                              distCoeffs=dist_camera,
+                              rvec=transform[0:3, 0:3],
+                              tvec=transform[0:3, 3],
+                              length=0.01)
 
 def draw_tip_marker(image, roi_center, roi_size, tip_position):
     line_length = 50

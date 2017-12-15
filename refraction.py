@@ -24,18 +24,19 @@ def main():
     # modeler.make_plot()
 
 class RefractionModeler(object):
-    def __init__(self, camera_a_origin, camera_b_origin, phantom_mesh_dims, phantom_transform, refractive_index_phantom, refractive_index_ambient):
+    def __init__(self, camera_a_origin, camera_b_origin, phantom_mesh_dims, refractive_index_phantom, refractive_index_ambient):
         self.camera_a_origin = camera_a_origin
         self.camera_b_origin = camera_b_origin
-        self.mesh_phantom = trimesh.primitives.Box(extents=phantom_mesh_dims, transform=phantom_transform)
+        self.phantom_mesh_dims = phantom_mesh_dims
         self.refractive_index_phantom = refractive_index_phantom
         self.refractive_index_ambient = refractive_index_ambient
-        # self.fig = plt.figure()
-        # self.ax = self.fig.add_subplot(111, projection='3d')
+        self.fig = plt.figure()
+        self.ax = self.fig.add_subplot(111, projection='3d')
 
-    def solve_real_point_from_refracted(self, point_observed):
-        # print("Origin A", self.camera_a_origin)
-        # print("Origin B", self.camera_b_origin)
+    def solve_real_point_from_refracted(self, point_observed, transform_phantom):
+        self.mesh_phantom = trimesh.primitives.Box(extents=self.phantom_mesh_dims, transform=transform_phantom)
+        print("Origin A", self.camera_a_origin)
+        print("Origin B", self.camera_b_origin)
         self.point_observed = point_observed
         # print("Point observed", point_observed)
 
@@ -51,8 +52,8 @@ class RefractionModeler(object):
             success = False
             self.real_point = None
         else:
-            # print("Inter A", location_nearest_a)
-            # print("Inter B", location_nearest_b)
+            print("Inter A", location_nearest_a)
+            print("Inter B", location_nearest_b)
 
             # print("Norm A", normal_nearest_a)
             # print("Norm B", normal_nearest_b)
@@ -69,6 +70,7 @@ class RefractionModeler(object):
 
             # print("Refraction error", np.linalg.norm(self.real_point - self.point_observed))
             success = True
+            # self.make_plot()
         return success, self.real_point
 
     def make_plot(self):
@@ -82,8 +84,8 @@ class RefractionModeler(object):
         plt.axis('equal')
         plt.xlabel("X")
         plt.ylabel("Y")
-        # plt.draw()  # redraw the canvas
-        # self.fig.canvas.flush_events()
+        plt.draw()  # redraw the canvas
+        self.fig.canvas.flush_events()
 
     def _get_closest_intersection(self, ray_origin, ray_direction):
         triangles, rays, locations = self.mesh_phantom.ray.intersects_id(np.reshape(ray_origin,(1,3)), np.reshape(ray_direction,(1,3)), return_locations=True)

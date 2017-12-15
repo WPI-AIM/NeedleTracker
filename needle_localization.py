@@ -109,7 +109,7 @@ def main():
     roi_height = int(root.find("roi_height").text)
 
     offset_angle = 0
-    offset_magnitude = 0.005
+    offset_magnitude = float(root.find("target_shift_magnitude").text)
 
     output_path = output_dir + output_prefix + '_' + time.strftime("%Y_%m_%d_%H_%M_%S")
     print(output_path)

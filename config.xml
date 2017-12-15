@@ -59,4 +59,6 @@
 
 	<index_refraction_phantom>1.5</index_refraction_phantom>
 	<index_refraction_ambient>1.0</index_refraction_ambient>
+
+	<target_shift_magnitude>0.005</target_shift_magnitude>
 </data>

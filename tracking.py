@@ -226,11 +226,9 @@ class TargetTracker:
                 self.target_coords = (cx, cy)
 
 class PhantomTracker:
-    def __init__(self, board, dictionary, mat_camera, dist_camera, dims_phantom):
+    def __init__(self, board, dictionary, dims_phantom):
         self.board = board
         self.dictionary = dictionary
-        self.mat_camera = mat_camera
-        self.dist_camera = dist_camera
         self.dims_phantom = dims_phantom
         self.transform_camera_to_phantom = None
         self.transform_last = None
@@ -242,6 +240,14 @@ class PhantomTracker:
                                           [dims_phantom[0], dims_phantom[1], -dims_phantom[2]],
                                           [dims_phantom[0], -dims_phantom[1], dims_phantom[2]],
                                           [dims_phantom[0], dims_phantom[1], dims_phantom[2]]])*0.5
+        # self.vertices_phantom = np.array([[              0,               0,               0],
+        #                                   [              0, dims_phantom[1],               0],
+        #                                   [              0,               0, dims_phantom[2]],
+        #                                   [              0, dims_phantom[1], dims_phantom[2]],
+        #                                   [dims_phantom[0],               0,               0],
+        #                                   [dims_phantom[0], dims_phantom[1],               0],
+        #                                   [dims_phantom[0],               0, dims_phantom[2]],
+        #                                   [dims_phantom[0], dims_phantom[1], dims_phantom[2]]])
 
         self.transforms_vertex_phantom = []
         for vertex in self.vertices_phantom:
@@ -249,10 +255,10 @@ class PhantomTracker:
                     (np.concatenate((np.eye(3), vertex.reshape((3,1))), axis=1), np.array([[0, 0, 0, 1]])), axis=0))
         # print(self.transforms_vertex_phantom)
 
-    def update(self, image):
+    def update(self, image, mat_camera, dist_camera):
         markerCorners, markerIds, _ = cv2.aruco.detectMarkers(image=image, dictionary=self.dictionary)
         if markerIds is not None:
-            ret, rvec, tvec = cv2.aruco.estimatePoseBoard(corners=markerCorners, ids=markerIds, board=self.board, cameraMatrix=self.mat_camera, distCoeffs=self.dist_camera)
+            ret, rvec, tvec = cv2.aruco.estimatePoseBoard(corners=markerCorners, ids=markerIds, board=self.board, cameraMatrix=mat_camera, distCoeffs=dist_camera)
             if ret:
                 rmat, _ = cv2.Rodrigues(np.array(rvec, dtype=np.float32))
                 transform_camera_to_phantom = np.concatenate(
@@ -269,7 +275,7 @@ class PhantomTracker:
 
         print(self.transform_camera_to_phantom)
 
-    def get_phantom_corner_image_points(self, rvec_camera=np.eye(3), tvec_camera=np.zeros((3,1))):
+    def get_phantom_corner_image_points(self, mat_camera, dist_camera, rvec_camera=np.eye(3), tvec_camera=np.zeros((3,1))):
         vertices_transformed = []
         for transform_phantom_to_vertex in self.transforms_vertex_phantom:
             vertices_transformed.append(np.dot(self.transform_camera_to_phantom, transform_phantom_to_vertex))
@@ -280,27 +286,31 @@ class PhantomTracker:
         # print("Transform camera to vertex")
         # print(np.array(vertices_transformed))
         pts, _ = cv2.projectPoints(objectPoints=np.array(vertices_transformed)[:,0:3,3],
-                                         rvec=rvec_camera,
-                                         tvec=tvec_camera,
-                                         cameraMatrix=self.mat_camera,
-                                         distCoeffs=self.dist_camera)
+                                   rvec=rvec_camera,
+                                   tvec=tvec_camera,
+                                   cameraMatrix=mat_camera,
+                                   distCoeffs=dist_camera)
         self.image_points = pts.reshape((-1,2)).astype(np.int32)
         # print("Image point")
         print(self.image_points)
 
-    def draw_phantom_axes(self, image):
-        return cv2.aruco.drawAxis(image=image, cameraMatrix=self.mat_camera, distCoeffs=self.dist_camera, rvec=self.transform_camera_to_phantom[0:3, 0:3],
-                                  tvec=self.transform_camera_to_phantom[0:3, 3], length=0.03)
+    def draw_phantom_axes(self, image, mat_camera, dist_camera):
+        return cv2.aruco.drawAxis(image=image,
+                                  cameraMatrix=mat_camera,
+                                  distCoeffs=dist_camera,
+                                  rvec=self.transform_camera_to_phantom[0:3, 0:3],
+                                  tvec=self.transform_camera_to_phantom[0:3, 3],
+                                  length=0.03)
 
-    def draw_phantom_corners(self, image):
-        self.get_phantom_corner_image_points()
+    def draw_phantom_corners(self, image, mat_camera, dist_camera, rvec_camera=np.eye(3), tvec_camera=np.zeros((3,1))):
+        self.get_phantom_corner_image_points(mat_camera, dist_camera, rvec_camera=rvec_camera, tvec_camera=tvec_camera)
         output = image.copy()
         for point in self.image_points:
             cv2.circle(output, (int(point[0]), int(point[1])), 7, (0, 255, 255))
         return output
 
-    def get_phantom_mask(self, shape, rvec_camera=np.eye(3), tvec_camera=np.zeros((3,1))):
-        self.get_phantom_corner_image_points()
+    def get_phantom_mask(self, shape, mat_camera, dist_camera, rvec_camera=np.eye(3), tvec_camera=np.zeros((3,1))):
+        self.get_phantom_corner_image_points(mat_camera, dist_camera, rvec_camera, tvec_camera)
         filled_mask =  cv2.cvtColor(cv2.fillConvexPoly(np.zeros((480,640), dtype=np.uint8), self.image_points, len(self.image_points), 255), cv2.COLOR_GRAY2BGR)
         cv2.imshow("Phantom mask", filled_mask)
 

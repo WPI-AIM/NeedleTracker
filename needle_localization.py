@@ -313,14 +313,12 @@ def main():
     compensator_tip = refraction.RefractionModeler(camera_a_origin,
                                                    camera_b_origin,
                                                    phantom_dims,
-                                                   transform_camera_to_phantom,
                                                    float(root.find("index_refraction_phantom").text),
                                                    float(root.find("index_refraction_ambient").text))
 
     compensator_target = refraction.RefractionModeler(camera_a_origin,
                                                       camera_b_origin,
                                                       phantom_dims,
-                                                      transform_camera_to_phantom,
                                                       float(root.find("index_refraction_phantom").text),
                                                       float(root.find("index_refraction_ambient").text))
 
@@ -352,7 +350,7 @@ def main():
     phantom_board_data = np.load("./data/phantom_board.npz")
     dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
     board = cv2.aruco.Board_create(objPoints=phantom_board_data['obj_points'], dictionary=dictionary, ids=phantom_board_data['ids'])
-    tracker_phantom = tracking.PhantomTracker(board, dictionary, mat_left, dist_left, dims_phantom=phantom_dims)
+    tracker_phantom = tracking.PhantomTracker(board, dictionary, dims_phantom=phantom_dims)
 
 
     time_start = time.time()
@@ -391,7 +389,7 @@ def main():
             MANUAL_ROI_TOP_SET = False
             MANUAL_ROI_SIDE_SET = False
 
-            tracker_phantom.update(camera_side_current_frame)
+            tracker_phantom.update(camera_side_current_frame, mat_left, dist_left)
             # tracker_phantom.get_phantom_corner_image_points()
 
             time_delta = time.time() - time_last
@@ -435,18 +433,18 @@ def main():
             # position_target_second = triangulator_target.get_position_3D(TARGET_TOP_B,
             #                                                              TARGET_SIDE_B)
 
-            success_compensation_tip, position_tip_corrected_list = compensator_tip.solve_real_point_from_refracted(np.ravel(position_tip))
-            success_compensation_target, position_target_corrected_list = compensator_target.solve_real_point_from_refracted(np.ravel(position_target))
+            success_compensation_tip, position_tip_corrected_list = compensator_tip.solve_real_point_from_refracted(np.ravel(position_tip), tracker_phantom.transform_camera_to_phantom)
+            success_compensation_target, position_target_corrected_list = compensator_target.solve_real_point_from_refracted(np.ravel(position_target), tracker_phantom.transform_camera_to_phantom)
             position_tip_corrected = position_tip_corrected_list
 
             position_tip_corrected = position_tip
 
             position_target_corrected = position_target
-            # if success_compensation_target:
-            #     position_target_corrected = np.array([position_target_corrected_list[0], position_target_corrected_list[1], position_target_corrected_list[2]]).reshape((3,1))
-            #     output_string += "\n"
-            # else:
-            #     output_string += "TARGET REFRACTION COMPENSATION FAILED!\n"
+            if success_compensation_target:
+                position_target_corrected = np.array([position_target_corrected_list[0], position_target_corrected_list[1], position_target_corrected_list[2]]).reshape((3,1))
+                output_string += "\n"
+            else:
+                output_string += "TARGET REFRACTION COMPENSATION FAILED!\n"
 
             # Don't claim that automatically-generated target poses are accurate if they fail refraction compensation
             if use_target_segmentation:
@@ -539,9 +537,11 @@ def main():
                                                     side_path)
 
             # camera_side_with_marker = tracker_phantom.draw_phantom_axes(camera_side_with_marker)
+            camera_top_with_marker = tracker_phantom.draw_phantom_corners(camera_top_with_marker, mat_right, dist_right, rvec_camera=rotation_side_to_top, tvec_camera=translation_side_to_top)
 
-            # camera_side_with_marker = tracker_phantom.draw_phantom_corners(camera_side_with_marker)
+            camera_side_with_marker = tracker_phantom.draw_phantom_corners(camera_side_with_marker, mat_left, dist_left)
             # tracker_phantom.get_phantom_mask(camera_side_with_marker.shape)
+            camera_side_with_marker = tracker_phantom.draw_phantom_axes(camera_side_with_marker, mat_left, dist_left)
 
             tip_reprojected_side, _ = cv2.projectPoints(np.array([transform_camera_to_tip[0:3,3]]).astype(np.float32),
                                                         np.eye(3), np.zeros((3,1)), mat_left, dist_left)

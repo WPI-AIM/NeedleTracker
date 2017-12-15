@@ -24,16 +24,17 @@ def main():
     # modeler.make_plot()
 
 class RefractionModeler(object):
-    def __init__(self, camera_a_origin, camera_b_origin, phantom_mesh_dims, phantom_transform, refractive_index_phantom, refractive_index_ambient):
+    def __init__(self, camera_a_origin, camera_b_origin, phantom_mesh_dims, refractive_index_phantom, refractive_index_ambient):
         self.camera_a_origin = camera_a_origin
         self.camera_b_origin = camera_b_origin
-        self.mesh_phantom = trimesh.primitives.Box(extents=phantom_mesh_dims, transform=phantom_transform)
+        self.phantom_mesh_dims = phantom_mesh_dims
         self.refractive_index_phantom = refractive_index_phantom
         self.refractive_index_ambient = refractive_index_ambient
         # self.fig = plt.figure()
         # self.ax = self.fig.add_subplot(111, projection='3d')
 
-    def solve_real_point_from_refracted(self, point_observed):
+    def solve_real_point_from_refracted(self, point_observed, transform_phantom):
+        self.mesh_phantom = trimesh.primitives.Box(extents=self.phantom_mesh_dims, transform=transform_phantom)
         # print("Origin A", self.camera_a_origin)
         # print("Origin B", self.camera_b_origin)
         self.point_observed = point_observed

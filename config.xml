@@ -3,7 +3,7 @@
 	<ip>192.168.0.100</ip>
 	<port>18944</port>
 	<output_dir>./data/Trial3/</output_dir>
-	<prefix>insertion</prefix>
+	<prefix>target_shift</prefix>
 	<calibration_file>calibration.npz</calibration_file>
 
 	<index_camera_top>1</index_camera_top>

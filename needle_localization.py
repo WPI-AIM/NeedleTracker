@@ -165,15 +165,15 @@ def main():
     dist_right = np.reshape(np.array(dist_right_obj.data), (dist_right_obj.rows, dist_right_obj.cols))
 
     # translation_side_to_top = np.array([9.336674963296142e-05, 0.1268878884308696, 0.12432346740907979]).reshape((3,1))
-    translation_side_to_top = np.array([-0.00405898148084166, 0.12556883059577384, 0.12740889645198586]).reshape((3,1))
+    translation_side_to_top = np.array([-0.017468984298953893, 0.14676038110942088, 0.14458964190901735]).reshape((3,1))
 
     # rotation_side_to_top = np.array( [0.997701828954437, -0.03188640457921707, -0.0597855977973143,
     #                                   -0.058907963785628806, 0.027788165175257316, -0.9978765803839791,
     #                                   0.03348002842894244, 0.9991051371498414, 0.025845940052435786]).reshape((3,3))
 
-    rotation_side_to_top = np.array([0.9944425578466023, -0.07751605003550875, -0.07124086699640379,
-                                     -0.07012885032973017, 0.01697791409053453, -0.9973934503417218,
-                                     0.07852352192137778, 0.996846534036221, 0.011447448843998962]).reshape((3, 3))
+    rotation_side_to_top = np.array([0.9919471795154419, -0.09749863540124734, -0.08083816639591992,
+                                     -0.07864663874423747, 0.026121328482080326, -0.9965602753534604,
+                                     0.09927486724037057, 0.9948928044232836, 0.018243038156537935]).reshape((3, 3))
 
     transform_side_to_top = make_homogeneous_tform(rotation=rotation_side_to_top, translation=translation_side_to_top)
     transform_top_to_side = np.linalg.inv(transform_side_to_top)
@@ -183,11 +183,15 @@ def main():
     print("side to top")
     print(transform_side_to_top)
 
+    # p1_side_obj = Struct(**cal_left.projection_matrix)
+    # p1_side = np.reshape(np.array(p1_side_obj.data), (p1_side_obj.rows, p1_side_obj.cols))
     p1_side = np.dot(mat_left, np.concatenate((np.eye(3), np.zeros((3,1))), axis=1))
     # p1_side = np.array([651.2401417664485, 0.0, 313.8361587524414, 0.0, 0.0, 651.2401417664485, 204.06911087036133, 0.0, 0.0, 0.0, 1.0, 0.0]).reshape((3,4))
+
+    # p2_top_obj = Struct(**cal_right.projection_matrix)
+    # p2_top = np.reshape(np.array(p2_top_obj.data), (p2_top_obj.rows, p2_top_obj.cols))
     p2_top = np.dot(mat_right, transform_side_to_top[0:3,:])
     # p2_top = np.array([651.2401417664485, 0.0, 313.8361587524414, 0.0, 0.0, 651.2401417664485, 204.06911087036133, 116.52837949973384, 0.0, 0.0, 1.0, 0.0]).reshape((3,4))
-
 
     top_frames = deque(maxlen=int(root.find("frame_deque_size").text))
     side_frames = deque(maxlen=int(root.find("frame_deque_size").text))
@@ -301,7 +305,7 @@ def main():
                                        "camera_side", verbose=False)
 
     phantom_dims = np.array([0.12, 0.058, 0.058]) # length is actually 0.12675 meters
-    phantom_transform = np.load("./data/transform_camera_to_phantom.npz")['transform_camera_to_phantom']
+    transform_camera_to_phantom = np.load("./data/transform_camera_to_phantom.npz")['transform_camera_to_phantom']
     # phantom_transform[2,3]=0.1
     camera_a_origin = np.array([0,0,0])
     camera_b_origin = transform_side_to_top[0:3,3].ravel()
@@ -309,14 +313,14 @@ def main():
     compensator_tip = refraction.RefractionModeler(camera_a_origin,
                                                    camera_b_origin,
                                                    phantom_dims,
-                                                   phantom_transform,
+                                                   transform_camera_to_phantom,
                                                    float(root.find("index_refraction_phantom").text),
                                                    float(root.find("index_refraction_ambient").text))
 
     compensator_target = refraction.RefractionModeler(camera_a_origin,
                                                       camera_b_origin,
                                                       phantom_dims,
-                                                      phantom_transform,
+                                                      transform_camera_to_phantom,
                                                       float(root.find("index_refraction_phantom").text),
                                                       float(root.find("index_refraction_ambient").text))
 
@@ -430,11 +434,11 @@ def main():
             position_tip_corrected = position_tip
 
             position_target_corrected = position_target
-            if success_compensation_target:
-                position_target_corrected = np.array([position_target_corrected_list[0], position_target_corrected_list[1], position_target_corrected_list[2]]).reshape((3,1))
-                output_string += "\n"
-            else:
-                output_string += "TARGET REFRACTION COMPENSATION FAILED!\n"
+            # if success_compensation_target:
+            #     position_target_corrected = np.array([position_target_corrected_list[0], position_target_corrected_list[1], position_target_corrected_list[2]]).reshape((3,1))
+            #     output_string += "\n"
+            # else:
+            #     output_string += "TARGET REFRACTION COMPENSATION FAILED!\n"
 
             # Don't claim that automatically-generated target poses are accurate if they fail refraction compensation
             if use_target_segmentation:
@@ -536,6 +540,18 @@ def main():
             camera_top_with_marker = draw_marker(camera_top_with_marker,
                                                   tip_reprojected_top.astype(np.int32).ravel(), (255, 255, 255), 7)
 
+
+
+            target_reprojected_side, _ = cv2.projectPoints(np.array([transform_camera_to_target[0:3,3]]).astype(np.float32),
+                                                        np.eye(3), np.zeros((3,1)), mat_left, dist_left)
+            camera_side_with_marker = draw_marker(camera_side_with_marker,
+                                                  target_reprojected_side.astype(np.int32).ravel(), (255,255,255), 7)
+
+            target_reprojected_top, _ = cv2.projectPoints(np.array([transform_camera_to_target[0:3, 3]]).astype(np.float32),
+                                                        rotation_side_to_top, translation_side_to_top, mat_right, dist_right)
+            camera_top_with_marker = draw_marker(camera_top_with_marker,
+                                                 target_reprojected_top.astype(np.int32).ravel(), (255, 255, 255), 7)
+
             print(tip_reprojected_top, tip_reprojected_side)
 
             time_delta = time.time() - time_last
@@ -578,7 +594,6 @@ def main():
             out_combined.write(combined)
             out_flow.write(combined_flow)
 
-            delta_last = delta
             position_tip_last = position_tip_corrected
 
             time_delta = time.time() - time_last

@@ -160,17 +160,17 @@ class TipTracker:
         position_tip_new = self._get_tip_coords(flow_thresholded)
         if position_tip_new is not None:
             self.position_tip = position_tip_new
-            self.roi_center = self._get_new_valid_roi(self.position_tip)
+            self.roi_center = self._get_new_valid_roi((int(self.position_tip[0]-float(self.roi_size[0]*0.33)), self.position_tip[1]))
 
 
 class Triangulator:
     def __init__(self, P1, P2):
         self.P1 = P1
         self.P2 = P2
-        print("P1")
-        print(self.P1)
-        print("P2")
-        print(self.P2)
+        # print("P1")
+        # print(self.P1)
+        # print("P2")
+        # print(self.P2)
 
     def _to_float(self, coords):
         return (float(coords[0]), float(coords[1]))

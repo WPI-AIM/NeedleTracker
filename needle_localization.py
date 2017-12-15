@@ -8,6 +8,7 @@ Created on Feb 7, 2017
 
 import time
 import numpy as np
+import math
 import cv2
 import subprocess
 import socket
@@ -20,6 +21,7 @@ import refraction
 import tracking
 import serial
 import matplotlib
+import random
 
 matplotlib.interactive(True)
 
@@ -68,6 +70,7 @@ def main():
         load_video_path, save_video, use_target_segmentation, use_arduino, no_registration,\
         FRAME_SIZE, TARGET_SET, ROI_CENTER_MANUAL_TOP, ROI_CENTER_MANUAL_SIDE, MANUAL_ROI_TOP_SET, MANUAL_ROI_SIDE_SET
 
+    SHIFT_TARGET = False
 
 
     # Load xml config file. This is for values that possibly need to be changed but are likely to stay the same for many runs.
@@ -104,6 +107,9 @@ def main():
 
     roi_width = int(root.find("roi_width").text)
     roi_height = int(root.find("roi_height").text)
+
+    offset_angle = 0
+    offset_magnitude = 0.005
 
     output_path = output_dir + output_prefix + '_' + time.strftime("%Y_%m_%d_%H_%M_%S")
     print(output_path)
@@ -362,13 +368,16 @@ def main():
             _, camera_top_current_frame = cap_top.read()
             _, camera_side_current_frame = cap_side.read()
 
-            input = cv2.waitKey(1)
-            if input == ord('q') or camera_top_current_frame is None or camera_side_current_frame is None:
+            input_key = cv2.waitKey(1)
+            if input_key == ord('q') or camera_top_current_frame is None or camera_side_current_frame is None:
                 break
-            elif input == ord('a'):
-
+            elif input_key == ord('a'):
                 # Toggle target status
                 TARGET_SET = not TARGET_SET
+            elif input_key == ord('k'):
+                SHIFT_TARGET = not SHIFT_TARGET
+                offset_angle = 2 * np.pi * random.random()
+
             output_string = ""
 
             times = []
@@ -460,6 +469,12 @@ def main():
 
             # transform_camera_to_target_uncorrected = make_homogeneous_tform(translation=position_target)
             transform_camera_to_target = make_homogeneous_tform(translation=position_target_corrected)
+
+            if SHIFT_TARGET:
+                output_string += "SHIFTED TARGET\n"
+                transform_camera_to_target = np.dot(transform_camera_to_target, make_offset_transform(offset_magnitude, offset_angle))
+            else:
+                output_string += "NORMAL TARGET\n"
 
             transform_registration_marker_to_camera = np.linalg.inv(transform_camera_to_registration_marker)
 
@@ -734,6 +749,12 @@ def draw_marker(image, coords, color, diameter):
     output = image.copy()
     cv2.circle(output, (coords[0], coords[1]), diameter, color)
     return output
+
+def make_offset_transform(magnitude, angle):
+    y = 0
+    x = magnitude*math.sin(angle)
+    z = magnitude*math.cos(angle)
+    return make_homogeneous_tform(np.eye(3), np.array([x, y, z]))
 
 def get_coords(event, x, y, flags, param):
     global TARGET_TOP_A, TARGET_SIDE_A, FRAME_SIZE, ROI_CENTER_MANUAL_TOP, ROI_CENTER_MANUAL_SIDE, MANUAL_ROI_TOP_SET, MANUAL_ROI_SIDE_SET

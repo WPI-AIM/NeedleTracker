@@ -79,12 +79,12 @@ def main():
         print('Connecting to ' + ip_address + ' port ' + str(port) + '...')
         s.connect((ip_address, port))
 
-    cal_left = Struct(**yaml.load(file('left.yaml','r')))
+    cal_side = Struct(**yaml.load(file('left.yaml','r')))
     cal_right = Struct(**yaml.load(file('right.yaml', 'r')))
 
-    mat_left = yaml_to_mat(cal_left.camera_matrix)
+    mat_side = yaml_to_mat(cal_side.camera_matrix)
     # mat_right= yaml_to_mat(cal_right.camera_matrix)
-    dist_left = yaml_to_mat(cal_left.distortion_coefficients)
+    dist_side = yaml_to_mat(cal_side.distortion_coefficients)
     # dist_right = yaml_to_mat(cal_right.distortion_coefficients)
 
     # trans_right = np.array([[-0.0016343138898400025], [-0.13299820438398743], [0.1312384027069722]])
@@ -119,8 +119,8 @@ def main():
 
     axis = np.float32([[3, 0, 0], [0, 3, 0], [0, 0, -3]]).reshape(-1, 3)
 
-    print(mat_left)
-    print(dist_left)
+    print(mat_side)
+    print(dist_side)
 
     transform_homogeneous = np.eye(4)
     transform_homogeneous_last = np.eye(4)
@@ -174,13 +174,13 @@ def main():
         markerCorners, markerIds, _ = cv2.aruco.detectMarkers(image=frame_side, dictionary=dictionary)
         # print(markerIds)
         if markerIds is not None:
-            count, charucoCorners, charucoIds = cv2.aruco.interpolateCornersCharuco(markerCorners=markerCorners, markerIds=markerIds, image=frame_side, board=board, cameraMatrix=mat_left, distCoeffs=dist_left)
+            count, charucoCorners, charucoIds = cv2.aruco.interpolateCornersCharuco(markerCorners=markerCorners, markerIds=markerIds, image=frame_side, board=board, cameraMatrix=mat_side, distCoeffs=dist_side)
             # print(charucoCorners)
             # print(charucoIds)
             # print("stuff!", ret)
             cv2.aruco.drawDetectedCornersCharuco(image=frame_side, charucoCorners=charucoCorners, charucoIds=charucoIds)
 
-            ret, rvec, tvec = cv2.aruco.estimatePoseCharucoBoard(charucoCorners=charucoCorners, charucoIds=charucoIds, board=board, cameraMatrix=mat_left, distCoeffs=dist_left)
+            ret, rvec, tvec = cv2.aruco.estimatePoseCharucoBoard(charucoCorners=charucoCorners, charucoIds=charucoIds, board=board, cameraMatrix=mat_side, distCoeffs=dist_side)
             # project 3D points to image plane
             # print(rvec, tvec)
             # print(rvec, '\n')
@@ -199,7 +199,7 @@ def main():
 
                 transforms.append(transform_homogeneous)
                 # frame_side_undistort = cv2.undistort(cameraMatrix=mat_left, distCoeffs=dist_left, src=frame_side)
-                frame_side = cv2.aruco.drawAxis(image=frame_side, cameraMatrix=mat_left, distCoeffs=dist_left, rvec=rvec, tvec=tvec, length=0.03)
+                frame_side = cv2.aruco.drawAxis(image=frame_side, cameraMatrix=mat_side, distCoeffs=dist_side, rvec=rvec, tvec=tvec, length=0.03)
 
             # imgpts, jac = cv2.projectPoints(axis, rvec, tvec, mat_left, dist_left)
             # frame_side_markers = draw(frame_side, charucoCorners, imgpts)

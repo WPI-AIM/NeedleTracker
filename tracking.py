@@ -261,17 +261,17 @@ class PhantomTracker:
             ret, rvec, tvec = cv2.aruco.estimatePoseBoard(corners=markerCorners, ids=markerIds, board=self.board, cameraMatrix=mat_camera, distCoeffs=dist_camera)
             if ret:
                 rmat, _ = cv2.Rodrigues(np.array(rvec, dtype=np.float32))
-                transform_camera_to_phantom = np.concatenate(
+                self.transform_camera_to_phantom = np.concatenate(
                     (np.concatenate((rmat, tvec), axis=1), np.array([[0, 0, 0, 1]])), axis=0)
-                if self.transform_last is None:
-                    self.transform_camera_to_phantom = transform_camera_to_phantom
-                    self.transform_last = transform_camera_to_phantom
-                else:
-                    diff = np.dot(np.linalg.inv(self.transform_last), transform_camera_to_phantom)
-                    mag = np.linalg.norm(diff[0:3,3])
-                    print(mag)
-                    if mag <= 0.01:
-                        self.transform_camera_to_phantom = transform_camera_to_phantom
+                # if self.transform_last is None:
+                #     self.transform_camera_to_phantom = transform_camera_to_phantom
+                #     self.transform_last = transform_camera_to_phantom
+                # else:
+                #     diff = np.dot(np.linalg.inv(self.transform_last), transform_camera_to_phantom)
+                #     mag = np.linalg.norm(diff[0:3,3])
+                #     print(mag)
+                #     if mag <= 0.01:
+                #         self.transform_camera_to_phantom = transform_camera_to_phantom
 
         print(self.transform_camera_to_phantom)
 

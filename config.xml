@@ -3,8 +3,8 @@
 	<ip>192.168.0.100</ip>
 	<port>18944</port>
 
-	<output_dir>./data/Trial3/</output_dir>
-	<prefix>target_shift</prefix>
+	<output_dir>./data/Trial6/</output_dir>
+	<prefix>insertion</prefix>
 	<calibration_file>calibration.npz</calibration_file>
 
 	<index_camera_top>1</index_camera_top>
@@ -37,7 +37,7 @@
 	<kernel_top>5</kernel_top>
 	<kernel_side>5</kernel_side>
 
-	<threshold_mag_lower>3</threshold_mag_lower>
+	<threshold_mag_lower>2</threshold_mag_lower>
 	<threshold_mag_upper>15</threshold_mag_upper>
 
 	<dof_top>

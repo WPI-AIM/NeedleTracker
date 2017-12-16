@@ -109,7 +109,9 @@ def main():
     roi_height = int(root.find("roi_height").text)
 
     offset_angle = 0
-    offset_magnitude = float(root.find("target_shift_magnitude").text)
+    # offset_magnitude = float(root.find("target_shift_magnitude").text)
+    offset_magnitude = (random.random() * (float(root.find("target_shift_magnitude").text) - 0.001)) + 0.001
+
 
     output_path = output_dir + output_prefix + '_' + time.strftime("%Y_%m_%d_%H_%M_%S")
     print(output_path)
@@ -671,6 +673,7 @@ def main():
     print(np.array(transforms_registration_marker_to_target)[:,0:3,3].shape)
     np.savetxt(output_path + "/trajectory.csv", np.concatenate((np.array(timestamps).reshape((-1,1)), np.array(transforms_registration_marker_to_tip)[:,0:3,3], np.array(transforms_registration_marker_to_target)[:,0:3,3]), axis=1), delimiter=",")
 
+    print("OFFSET MAGNITUDE: " + str(offset_magnitude))
 class Struct:
     def __init__(self, **entries):
         self.__dict__.update(entries)

@@ -2,16 +2,18 @@
 <data>
 	<ip>192.168.0.100</ip>
 	<port>18944</port>
-	<output_dir>./data/</output_dir>
-	<prefix>alignment_test</prefix>
-	<!--<prefix>optitrack</prefix>-->
+
+	<output_dir>./data/Trial12 TargetShift/</output_dir>
+	<prefix>insertion</prefix>
 	<calibration_file>calibration.npz</calibration_file>
 
 	<index_camera_top>1</index_camera_top>
 	<index_camera_side>2</index_camera_side>
 	<index_camera_aux>3</index_camera_aux>
 
-	<hue_motion>110</hue_motion>
+	<frame_deque_size>3</frame_deque_size>
+
+	<hue_motion>135</hue_motion>
 	<hue_motion_range>20</hue_motion_range>
 
 	<hue_target_min>40</hue_target_min>
@@ -25,14 +27,18 @@
 	<camera_top_contrast>200</camera_top_contrast>
 	<camera_top_brightness>180</camera_top_brightness>
 
-	<camera_side_focus_absolute>50</camera_side_focus_absolute>
+	<camera_side_focus_absolute>60</camera_side_focus_absolute>
 	<camera_side_contrast>200</camera_side_contrast>
 	<camera_side_brightness>180</camera_side_brightness>
+
+	<roi_width>150</roi_width>
+	<roi_height>50</roi_height>
 
 	<kernel_top>5</kernel_top>
 	<kernel_side>5</kernel_side>
 
-	<threshold_mag>3</threshold_mag>
+	<threshold_mag_lower>2</threshold_mag_lower>
+	<threshold_mag_upper>15</threshold_mag_upper>
 
 	<dof_top>
 		<pyr_scale>0.5</pyr_scale>
@@ -53,4 +59,6 @@
 
 	<index_refraction_phantom>1.5</index_refraction_phantom>
 	<index_refraction_ambient>1.0</index_refraction_ambient>
+
+	<target_shift_magnitude>0.005</target_shift_magnitude>
 </data>
